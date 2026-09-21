@@ -35,8 +35,12 @@ function run(key, n, seed) {
   if (arg('pull', null) !== null) cfg.CENTER_PULL = Number(arg('pull'));
   if (arg('jitter', null) !== null) cfg.JITTER = Number(arg('jitter'));
   if (arg('spread', null) !== null) cfg.DROP_SPREAD = Number(arg('spread'));
-  if (arg('gapbottom', null) !== null) Core.LEVELS.hard.funnel.gapBottom = Number(arg('gapbottom'));
-  if (arg('gaptop', null) !== null) Core.LEVELS.hard.funnel.gapTop = Number(arg('gaptop'));
+  if (arg('ampangle', null) !== null) cfg.FLIPPER_AMP_ANGLE = Number(arg('ampangle'));
+  if (arg('baseangle', null) !== null) cfg.FLIPPER_BASE_ANGLE = Number(arg('baseangle'));
+  if (arg('flen', null) !== null) cfg.FLIPPER_LEN = Number(arg('flen'));
+  if (arg('flipy', null) !== null) cfg.FLIPPER_Y = Number(arg('flipy'));
+  if (arg('flipperw', null) !== null) cfg.FLIPPER_HALF_W = Number(arg('flipperw'));
+  if (arg('flipperspeed', null) !== null) cfg.FLIPPER_SPEED = Number(arg('flipperspeed'));
   if (arg('rows', null) !== null) Core.LEVELS[key].rows = Number(arg('rows'));
   if (arg('dy', null) !== null) Core.LEVELS[key].dy = Number(arg('dy'));
 
@@ -53,6 +57,7 @@ function run(key, n, seed) {
     const b = Core.ball(rnd, cfg);
     let steps = 0;
     while (!Core.landed(b, cfg)) {
+      cfg.tick = (cfg.tick || 0) + 1;   // 与浏览器主循环同一速率推进挡板相位
       Core.step(b, pegs, cfg, rnd, s);
       if (++steps > 60000) { stuck++; break; }
     }

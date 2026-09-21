@@ -16,10 +16,10 @@
     <section class="hero__wallet">
       <p class="hero__label">剩余金额</p>
       <div class="hero__amount" id="walletAmount">0</div>
-      <p class="hero__sub">开局筹码 1,000 · 四个游戏共用同一份余额</p>
+      <p class="hero__sub">开局小黄瓜 1,000 · 五个游戏共用同一份余额</p>
       <div class="hero__actions">
         <a class="btn btn--lg" href="dice.html">开始玩</a>
-        <button class="btn btn--ghost" id="resetBtn" type="button">重置筹码为 1,000</button>
+        <button class="btn btn--ghost" id="resetBtn" type="button">重置为 1,000 小黄瓜</button>
       </div>
     </section>
 
@@ -38,8 +38,8 @@
         <div class="art-die"><i></i><i></i><i></i><i></i><i></i></div>
       </div>
       <h3 class="game-card__name">骰子猜大小</h3>
-      <p class="game-card__desc">三颗骰子物理抛掷，一把定输赢。押大小赔 1:1，押中豹子赔 24:1。</p>
-      <div class="game-card__odds">押中率 48.6% · 豹子 2.8%</div>
+        <p class="game-card__desc">三颗骰子物理抛掷，一把定输赢。押大小赔 1:1、豹子 24:1，还有顺子小奖和 456 大奖。</p>
+        <div class="game-card__odds">押中率 48.6% · 豹子 2.8%</div>
     </a>
 
     <a class="game-card" href="versus.html">
@@ -68,23 +68,37 @@
         <div class="art-pegs"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
       </div>
       <h3 class="game-card__name">弹珠机</h3>
-      <p class="game-card__desc">投币落珠穿过铜钉阵掉进底槽。三种难度各有不同的铜钉布局和赔率表。</p>
-      <div class="game-card__odds">简单 2× · 普通 5× · 困难 10×</div>
+      <p class="game-card__desc">投币落珠穿过均匀对称的铜钉阵，人字檐把珠子往两边劈、底部 45° 翻板一张一合拨向两侧。</p>
+      <div class="game-card__odds">简单 2× · 普通 3× · 困难 5×</div>
+    </a>
+
+    <a class="game-card" href="tiger.html">
+      <div class="game-card__art">
+        <span class="art-slot">🍊</span><span class="art-slot">🥕</span><span class="art-slot">🥒</span>
+      </div>
+      <h3 class="game-card__name">老虎机</h3>
+      <p class="game-card__desc">三列卷轴高速旋转，按「停止」依次定格。三列图形相同就中奖，黄瓜三连是最终大奖。</p>
+      <div class="game-card__odds">七种图形 · 全凭手气</div>
     </a>
   </div>
 
   <section class="panel" style="margin-top:26px">
     <h2 class="panel__title">规则速查</h2>
     <ul class="rules">
-      <li><b>余额</b>存在浏览器本地（localStorage），四个游戏页面共用；关掉网页再打开，筹码还在。</li>
-      <li><b>骰子猜大小</b>：三颗骰子点数 4–10 为小，11–17 为大；开出豹子时大小通杀，只有押豹子赢。</li>
+      <li><b>余额</b>存在浏览器本地（localStorage），五个游戏页面共用；关掉网页再打开，小黄瓜还在。</li>
+      <li><b>骰子猜大小</b>：三颗骰子点数 4–10 为小，11–17 为大；开出豹子时大小通杀，只有押豹子赢。
+        另有两个新注区：<b>顺子</b>（任意三连 123/234/345/456 · 赔 7:1）和 <b>456</b>（赔 30:1），开出对应点数即中。</li>
       <li><b>骰子比大小</b>：庄家先掷三颗骰子但<b>只亮出其中一颗</b>，另外两颗扣着。你看到这一颗再选「继续」或「加注」，最后开奖。
         比牌是<b>循环大小</b>：111（三条一）压 456（顺子），456 通吃普通点数，而 111 又是"最小点"输给普通点数。
         222~666 这些豹子不特殊，按总点数参与比较。加注按亮出的那一颗单独定价：亮 6 点赔 2.86 倍，亮 1 点则不可加注。</li>
       <li><b>21点</b>：A 可当 1 或 11；两张牌凑成 21 点即黑杰克，赔 3:2。庄家不足 17 点必须继续要牌。</li>
-      <li><b>弹珠机</b>：底槽赔率 × 下注额就是返还，1× 保本，正中空槽 0× 全输。可同时投多颗珠。
-        三档难度换的是<b>铜钉布局</b>和<b>赔率表</b>：简单最稳（最高 2×，最差只输一半），普通均衡（最高 5×），
-        困难最凶（最高 10×，正中空槽概率约一半）。</li>
+      <li><b>弹珠机</b>：底槽赔率 × 下注额就是返还。顶部<b>人字檐</b>把落珠往两边劈，槽口上方两根 45° <b>斜翻板</b>
+        紧贴中线不断一张一合：张开的瞬间珠子才漏得进正中大奖槽（赔率最高但最难进），其余时候被翻板
+        拨向两侧壁槽（赔率最低）。可同时投最多 10 颗珠。
+        三档难度换的是<b>钉阵密度</b>、<b>人字檐宽度</b>和<b>翻板开口</b>：简单最稳（中间 2×，被拨到两侧最差只输三成），
+        普通居中（中间 3×），困难最凶（中间 5×，被拨到两侧最差亏一半）。</li>
+      <li><b>老虎机</b>：下注后按「开始」让三个卷轴高速旋转（快得看不清），再按「停止」依次停下列子。
+        三列图形相同就中奖——七种图形：橘子、苹果、包子、蟑螂、胡萝卜、蘑菇，以及<b>最终大奖黄瓜</b>。</li>
       <li>余额低于最小下注（10）时，顶栏会出现<b>领取救济金</b>按钮。</li>
     </ul>
   </section>

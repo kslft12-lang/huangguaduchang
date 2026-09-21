@@ -14,7 +14,7 @@
 
   <div class="page-head">
     <h1>骰子猜大小</h1>
-    <p>三颗骰子一把定输赢。开豹子时大小通杀，只有押豹子赢。</p>
+    <p>三颗骰子一把定输赢。开豹子时大小通杀；开出任意三连（123/234/345/456）押顺子小奖，开出 456 另有 30:1 大奖。</p>
   </div>
 
   <section class="panel">
@@ -30,13 +30,13 @@
       <div class="readout">上局结果 <b id="lastOut">—</b></div>
     </div>
 
-    <div class="banner" id="banner" data-kind="push">先选筹码，再押 大 / 小 / 豹子。</div>
+    <div class="banner" id="banner" data-kind="push">先选小黄瓜，再押 大 / 小 / 豹子 / 顺子 / 456。</div>
   </section>
 
   <section class="panel">
     <h2 class="panel__title">下注</h2>
     <div class="bet-row">
-      <span class="bet-row__label">筹码</span>
+      <span class="bet-row__label">小黄瓜</span>
       <div class="chips" id="chipRow"></div>
     </div>
 
@@ -49,6 +49,12 @@
       </button>
       <button class="target" type="button" data-target="豹子">
         <b>豹子</b><span>三颗同点 · 赔 24:1</span>
+      </button>
+      <button class="target" type="button" data-target="顺子">
+        <b>顺子</b><span>任意三连 123/234/345/456 · 赔 7:1</span>
+      </button>
+      <button class="target" type="button" data-target="456">
+        <b>456</b><span>大顺子 456 · 赔 30:1</span>
       </button>
     </div>
   </section>

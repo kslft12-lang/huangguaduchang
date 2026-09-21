@@ -47,7 +47,8 @@
     ['dice', '骰子猜大小', 'dice.html'],
     ['versus', '骰子比大小', 'versus.html'],
     ['blackjack', '21点', 'blackjack.html'],
-    ['pachinko', '弹珠机', 'pachinko.html']
+    ['pachinko', '弹珠机', 'pachinko.html'],
+    ['tiger', '老虎机', 'tiger.html']
   ];
 
   var topbarEl = null;
@@ -72,7 +73,7 @@
           '<button class="btn btn--ghost btn--sm" id="sfxBtn" type="button" aria-pressed="false">音效 关</button>' +
           '<div class="balance-chip" id="balanceChip">' +
             '<span class="balance-chip__glyph"></span>' +
-            '<span class="balance-chip__label">余额</span>' +
+            '<span class="balance-chip__label">小黄瓜</span>' +
             '<span class="balance-chip__value" id="balanceValue">0</span>' +
           '</div>' +
           '<button class="btn btn--sm" id="refillBtn" type="button" hidden>领取救济金</button>' +
@@ -235,7 +236,7 @@
     /** 扣下注金；余额不足返回 false 并提示 */
     bet: function (n) {
       if (!this.canBet(n)) {
-        toast(balance < MIN_BET ? '余额不足，请领取救济金' : '余额不足 ' + n + ' 筹码', 'lose');
+        toast(balance < MIN_BET ? '余额不足，请领取救济金' : '余额不足 ' + n + ' 小黄瓜', 'lose');
         sfx.lose();
         return false;
       }
@@ -270,7 +271,7 @@
 
     reset: function () {
       write(START, true);
-      toast('已补满 ' + START + ' 筹码', 'win');
+      toast('已补满 ' + START + ' 小黄瓜', 'win');
       sfx.win();
     },
 

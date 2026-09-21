@@ -6,7 +6,7 @@
 
   var Core = window.PachinkoCore;
   var W = Core.W, H = Core.H;
-  var MAX_BALLS = 5;
+  var MAX_BALLS = 10;
   var CHIPS = [10, 50, 100, 500];
   var LEVEL_KEY = 'casino.pachinko.level';
 
@@ -128,10 +128,35 @@
     f.lineTo(W, cfg.SLOT_TOP);
     f.stroke();
 
-    // 左右边框
-    f.fillStyle = 'rgba(232,184,75,.35)';
+    // 黄铜机框：左右立柱 + 顶梁 + 底梁 + 铆钉（画在底槽之后，边框保持完整）
+    var rail = f.createLinearGradient(0, 0, cfg.WALL, 0);
+    rail.addColorStop(0, '#f8dd8f');
+    rail.addColorStop(0.45, '#d8a93c');
+    rail.addColorStop(1, '#6e4e12');
+    f.fillStyle = rail;
     f.fillRect(0, 0, cfg.WALL, H);
     f.fillRect(W - cfg.WALL, 0, cfg.WALL, H);
+    f.fillRect(0, 0, W, 5);
+    f.fillRect(0, H - 4, W, 4);
+
+    // 内侧暗边，机框看起来有厚度
+    f.fillStyle = 'rgba(0,0,0,.55)';
+    f.fillRect(cfg.WALL - 1.5, 0, 1.5, H);
+    f.fillRect(W - cfg.WALL, 0, 1.5, H);
+
+    // 铆钉
+    [[cfg.WALL / 2, 24], [cfg.WALL / 2, H - 20], [W - cfg.WALL / 2, 24], [W - cfg.WALL / 2, H - 20],
+     [cfg.WALL / 2, cfg.SLOT_TOP - 14], [W - cfg.WALL / 2, cfg.SLOT_TOP - 14]]
+      .forEach(function (p) {
+        f.beginPath();
+        f.arc(p[0], p[1], 3.2, 0, Math.PI * 2);
+        f.fillStyle = 'rgba(0,0,0,.55)';
+        f.fill();
+        f.beginPath();
+        f.arc(p[0] - 0.6, p[1] - 0.8, 2.3, 0, Math.PI * 2);
+        f.fillStyle = '#f8dd8f';
+        f.fill();
+      });
   }
 
   function resize() {
@@ -157,8 +182,8 @@
     banner.innerHTML = '落在第 ' + (idx + 1) + ' 槽（' + mult + '×），下注 ' + b.stake +
       ' → 返还 <span class="banner__amount">' + ret.toLocaleString('zh-CN') + '</span>';
 
-    if (net > 0) { Casino.toast('+' + net + ' 筹码', 'win'); Casino.sfx.win(); }
-    else if (net < 0) { Casino.toast(net + ' 筹码', 'lose'); Casino.sfx.lose(); }
+    if (net > 0) { Casino.toast('+' + net + ' 小黄瓜', 'win'); Casino.sfx.win(); }
+    else if (net < 0) { Casino.toast(net + ' 小黄瓜', 'lose'); Casino.sfx.lose(); }
     else { Casino.toast('保本', 'push'); Casino.sfx.click(); }
   }
 
@@ -175,6 +200,7 @@
 
     var scale = cfg.STEP / (1000 / 60);
     while (acc >= cfg.STEP) {
+      cfg.tick = (cfg.tick || 0) + 1;   // 每物理步推进一次挡板相位（与模拟器同速率）
       for (var i = balls.length - 1; i >= 0; i--) {
         var b = balls[i];
         Core.step(b, pegs, cfg, Math.random, scale);
@@ -192,9 +218,67 @@
     requestAnimationFrame(frame);
   }
 
+  function drawFlipper() {
+    var t = cfg.tick || 0;
+    var hw = cfg.FLIPPER_HALF_W;
+    [-1, 1].forEach(function (side) {
+      var s = Core.flipperSeg(cfg, side, t);
+
+      // 阴影
+      ctx.strokeStyle = 'rgba(0,0,0,.45)';
+      ctx.lineCap = 'round';
+      ctx.lineWidth = hw * 2 + 3;
+      ctx.beginPath();
+      ctx.moveTo(s.px, s.py + 4);
+      ctx.lineTo(s.tx, s.ty + 4);
+      ctx.stroke();
+
+      // 桨身（黄铜渐变：枢轴暗、板头亮，呈现一体铸造感）
+      var g = ctx.createLinearGradient(s.px, s.py, s.tx, s.ty);
+      g.addColorStop(0, '#8a6418');
+      g.addColorStop(0.5, '#d8a93c');
+      g.addColorStop(1, '#b8862a');
+      ctx.strokeStyle = g;
+      ctx.lineWidth = hw * 2;
+      ctx.beginPath();
+      ctx.moveTo(s.px, s.py);
+      ctx.lineTo(s.tx, s.ty);
+      ctx.stroke();
+
+      // 板头圆片（加厚的桨端，带一颗受光点）
+      ctx.beginPath();
+      ctx.arc(s.tx, s.ty, hw + 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#d8a93c';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(s.tx - side * 1.5, s.ty - 1.5, hw - 0.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#eec568';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(s.tx - side * 2.4, s.ty - 2.4, 1.4, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(253,240,196,.75)';
+      ctx.fill();
+
+      // 轴心铆钉
+      ctx.beginPath();
+      ctx.arc(s.px, s.py, 6.5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,.55)';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(s.px, s.py, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#d8a93c';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(s.px - 1, s.py - 1.2, 1.6, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,.85)';
+      ctx.fill();
+    });
+  }
+
   function draw() {
     ctx.clearRect(0, 0, W, H);
     ctx.drawImage(field, 0, 0, W, H);
+    drawFlipper();
 
     balls.forEach(function (b) {
       b.trail.forEach(function (p, i) {
@@ -227,7 +311,7 @@
       var top = Math.max.apply(null, L.mults);
       return '<button type="button" class="level-btn' + on + '" data-key="' + L.key + '">' +
         '<b>' + L.label + '</b>' +
-        '<span>最高 ' + top + '× · 返还 ' + (Core.rtp(L.key) * 100).toFixed(1) + '%</span>' +
+        '<span>最高 ' + top + '×</span>' +
         '</button>';
     }).join('');
     levelBlurb.textContent = lvl.blurb;
@@ -266,7 +350,7 @@
     acc = 0;
 
     banner.dataset.kind = 'push';
-    banner.textContent = '已切到「' + lvl.label + '」，选筹码后投币。';
+    banner.textContent = '已切到「' + lvl.label + '」，选小黄瓜后投币。';
 
     renderLevels();
     renderLegend();
@@ -292,7 +376,7 @@
     dropBtn.disabled = maxed || !Casino.canBet(currentBet());
     clearBtn.disabled = flying === 0;
     dropBtn.textContent = maxed ? '台面已满' : ('投币 ' + currentBet().toLocaleString('zh-CN'));
-    hintEl.textContent = flying ? '台面 ' + flying + ' 颗，落底自动结算' : '选筹码 → 投币';
+    hintEl.textContent = flying ? '台面 ' + flying + ' 颗，落底自动结算' : '选小黄瓜 → 投币';
   }
 
   function drop() {

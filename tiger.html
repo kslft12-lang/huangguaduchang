@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>老虎机 · 🥒黄瓜赌场🥒</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="topbar-root"></div>
+
+<main class="shell">
+
+  <div class="page-head">
+    <h1>老虎机</h1>
+    <p>下注后按「开始」让三个卷轴转起来，再按「停止」依次停下列子。三列图形相同就中奖，黄瓜三连是最终大奖。</p>
+  </div>
+
+  <section class="panel">
+    <h2 class="panel__title">机器</h2>
+    <div class="slot-machine" id="machine">
+      <div class="reel" id="reel0">
+        <span class="reel__cell">🥕</span><span class="reel__cell">🍊</span><span class="reel__cell reel__cell--line">🥒</span><span class="reel__cell">🍎</span><span class="reel__cell">🪳</span>
+      </div>
+      <div class="reel" id="reel1">
+        <span class="reel__cell">🍄</span><span class="reel__cell">🪳</span><span class="reel__cell reel__cell--line">🍊</span><span class="reel__cell">🥟</span><span class="reel__cell">🥕</span>
+      </div>
+      <div class="reel" id="reel2">
+        <span class="reel__cell">🍎</span><span class="reel__cell">🥕</span><span class="reel__cell reel__cell--line">🍄</span><span class="reel__cell">🪳</span><span class="reel__cell">🍊</span>
+      </div>
+    </div>
+    <p class="slot-payline">三列中央那一行是兑奖线，只有停在这一线上的三个图形才算数</p>
+    <div class="slot-actions">
+      <button class="btn btn--lg" id="startBtn" type="button">开始</button>
+      <button class="btn btn--ghost" id="stopBtn" type="button" disabled>停止</button>
+    </div>
+    <div class="banner" id="banner" data-kind="push">选好小黄瓜，按「开始」。</div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel__title">下注</h2>
+    <div class="bet-row">
+      <span class="bet-row__label">小黄瓜</span>
+      <div class="chips" id="chipRow"></div>
+    </div>
+    <p class="level-note">卷轴转速很快，赶不上也猜不中；每个符号出现的概率不一样，全凭手气。</p>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel__title">最近 10 局</h2>
+    <div class="history" id="history"><span class="readout">还没有记录</span></div>
+  </section>
+
+</main>
+
+<script src="js/common.js"></script>
+<script src="js/tiger.js"></script>
+</body>
+</html>

@@ -16,8 +16,8 @@
   var lastOut = document.getElementById('lastOut');
   var historyEl = document.getElementById('history');
 
-  var bet = 0;          // 当前选中的筹码额
-  var picked = 50;      // 'all' 表示「全部」筹码被选中
+  var bet = 0;          // 当前选中的小黄瓜额
+  var picked = 50;      // 'all' 表示「全部」小黄瓜被选中
   var busy = false;
   var history = [];
 
@@ -25,7 +25,7 @@
     dice.forEach(function (d, i) { Die.set(d, faces[i]); });
   }
 
-  /* ---------- 下注筹码 ---------- */
+  /* ---------- 下注小黄瓜 ---------- */
 
   function buildChips() {
     CHIPS.forEach(function (v) {
@@ -83,12 +83,17 @@
   function judge(target, faces) {
     var sum = faces[0] + faces[1] + faces[2];
     var triple = faces[0] === faces[1] && faces[1] === faces[2];
-    var tag = triple ? '豹' : (sum >= 11 ? '大' : '小');
+    var sorted = faces.slice().sort(function (a, b) { return a - b; });
+    var is456 = !triple && sorted[0] === 4 && sorted[1] === 5 && sorted[2] === 6;
+    var isRun = !triple && sorted[1] === sorted[0] + 1 && sorted[2] === sorted[1] + 1;
+    var tag = triple ? '豹' : (is456 ? '456' : (isRun ? '顺' : (sum >= 11 ? '大' : '小')));
     var win;
     if (target === '豹子') win = triple;
+    else if (target === '456') win = is456;
+    else if (target === '顺子') win = isRun;             // 任意三连都算小奖，456 也在内
     else if (target === '大') win = !triple && sum >= 11;
     else win = !triple && sum <= 10;
-    return { sum: sum, triple: triple, tag: tag, win: win };
+    return { sum: sum, triple: triple, is456: is456, isRun: isRun, tag: tag, win: win };
   }
 
   function pushLog(tag, sum, net) {
@@ -106,7 +111,7 @@
 
     var stake = currentBet();
     if (stake < Casino.MIN_BET || stake > Casino.getBalance()) {
-      Casino.toast('余额不足 ' + stake + ' 筹码', 'lose');
+      Casino.toast('余额不足 ' + stake + ' 小黄瓜', 'lose');
       Casino.sfx.lose();
       return;
     }
@@ -139,7 +144,7 @@
 
   function finish(target, stake, faces) {
     var r = judge(target, faces);
-    var mult = target === '豹子' ? 25 : 2;
+    var mult = { 豹子: 25, 456: 31, 顺子: 8 }[target] || 2;
     var ret = r.win ? stake * mult : 0;
     var net = ret - stake;
 

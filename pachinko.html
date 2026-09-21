@@ -14,7 +14,7 @@
 
   <div class="page-head">
     <h1>弹珠机</h1>
-    <p>投币落珠，穿过铜钉阵掉进底槽。落点赔率 × 下注额就是返还。</p>
+    <p>投币落珠穿过均匀对称的铜钉阵，顶部人字檐把珠子往两边劈、底部 45° 翻板一张一合把珠子拨向两侧。落点赔率 × 下注额就是返还。</p>
   </div>
 
   <div class="pachinko-grid">
@@ -29,7 +29,7 @@
         <canvas id="board" role="img" aria-label="弹珠机台面"></canvas>
         <div class="machine__foot">
           <span>台面中球 <span class="ball-count" id="ballCount">0</span> 颗</span>
-          <span id="hint">选筹码 → 投币</span>
+          <span id="hint">选小黄瓜 → 投币</span>
         </div>
       </section>
     </div>
@@ -42,15 +42,16 @@
           <button class="btn btn--lg" id="dropBtn" type="button">投币</button>
           <button class="btn btn--ghost" id="clearBtn" type="button">清空台面</button>
         </div>
-        <div class="banner" id="banner" data-kind="push">选好筹码，按「投币」。</div>
+        <div class="banner" id="banner" data-kind="push">选好小黄瓜，按「投币」。</div>
       </section>
 
       <section class="panel">
         <h2 class="panel__title">底槽赔率（本关）</h2>
         <div class="slots-legend" id="legend"></div>
         <p class="level-note">
-          赔率后面的百分比是 4 万颗球的实测落点概率。越靠边的槽位越难进，赔率越高。
-          换难度会同时换铜钉布局和赔率表；台面上有珠子时会先退还本金。
+          铜钉均匀对称，人字檐把珠子往两边劈、底部 45° 翻板一张一合又把珠子拨向两侧，
+          中间大奖槽要赶翻板张开的瞬间才进得去。百分比是 4 万颗球的实测落点概率。
+          换难度会同时换钉阵密度、人字檐和赔率表；台面上有珠子时会先退还本金。
         </p>
       </section>
     </aside>

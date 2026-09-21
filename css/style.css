@@ -507,6 +507,23 @@ body::before {
   color: var(--brass);
 }
 
+/* 老虎机卡片：三枚图形排成卷轴 */
+.art-slot {
+  font-size: 34px;
+  line-height: 1;
+  display: inline-block;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .5));
+  animation: slot-bob 2.4s ease-in-out infinite;
+}
+
+.art-slot:nth-child(2) { animation-delay: .4s; }
+.art-slot:nth-child(3) { animation-delay: .8s; }
+
+@keyframes slot-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
 .rules { margin: 0; padding-left: 20px; color: var(--cream-dim); font-size: 13.5px; }
 .rules li { margin-bottom: 5px; }
 .rules b { color: var(--cream); font-weight: 600; }
@@ -656,6 +673,8 @@ body::before {
 .history__item[data-r="大"] { color: var(--jade); border-color: rgba(61, 220, 151, .45); }
 .history__item[data-r="小"] { color: #7ec8ff; border-color: rgba(126, 200, 255, .45); }
 .history__item[data-r="豹"] { color: var(--brass-hi); border-color: rgba(232, 184, 75, .6); background: rgba(232, 184, 75, .12); }
+.history__item[data-r="顺"] { color: #ffb36b; border-color: rgba(255, 170, 90, .5); }
+.history__item[data-r="456"] { color: var(--coral); border-color: rgba(239, 91, 107, .55); background: rgba(239, 91, 107, .1); }
 
 /* ---------- 21 点 ---------- */
 
@@ -748,14 +767,25 @@ body::before {
 .pachinko-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; align-items: start; }
 
 .machine {
-  padding: 12px;
-  border-radius: var(--radius);
-  border: 1px solid rgba(232, 184, 75, .35);
-  background: linear-gradient(#16302a, #081310);
-  box-shadow: var(--shadow-lift), inset 0 0 0 1px rgba(0, 0, 0, .6);
+  padding: 14px;
+  border-radius: 16px;
+  border: 2px solid var(--brass-dk);
+  background: linear-gradient(#1d3a2e, #081310);
+  box-shadow: var(--shadow-lift),
+    inset 0 0 0 1px rgba(232, 184, 75, .4),
+    inset 0 0 0 4px rgba(0, 0, 0, .55),
+    inset 0 0 34px rgba(0, 0, 0, .7);
 }
 
-.machine canvas { display: block; width: 100%; height: auto; border-radius: 10px; background: #04100c; }
+.machine canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid rgba(232, 184, 75, .55);
+  background: #04100c;
+  box-shadow: 0 0 0 3px var(--brass-dk), 0 0 0 4px rgba(0, 0, 0, .6), inset 0 0 26px rgba(0, 0, 0, .65);
+}
 
 .machine__foot {
   display: flex;
@@ -783,6 +813,88 @@ body::before {
 .slot-line[data-tier="zero"] b { color: var(--coral); }
 
 .slot-line b { font-size: 12.5px; }
+
+/* ---------- 老虎机 ---------- */
+
+.slot-machine {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  padding: 26px 18px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(232, 184, 75, .35);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(61, 220, 151, .06), transparent 60%),
+    linear-gradient(#0c1c17, #071310);
+  box-shadow: inset 0 6px 24px rgba(0, 0, 0, .6);
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.reel {
+  position: relative;
+  height: 264px;
+  border-radius: 12px;
+  border: 2px solid var(--brass-dk);
+  background: linear-gradient(#0e1f18, #0a1612 30%, #0a1612 70%, #07120e);
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, .75), 0 5px 14px -8px #000;
+  display: grid;
+  grid-template-rows: repeat(5, 1fr);
+  overflow: hidden;
+}
+
+.reel__cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  line-height: 1;
+  opacity: .42;
+  filter: drop-shadow(0 4px 7px rgba(0, 0, 0, .6));
+  transition: opacity .12s;
+}
+
+/* 中央一行是兑奖线：上下金色描边 + 提亮 */
+.reel__cell--line {
+  opacity: 1;
+  background: rgba(232, 184, 75, .09);
+  box-shadow: inset 0 1.5px 0 rgba(232, 184, 75, .55), inset 0 -1.5px 0 rgba(232, 184, 75, .55);
+}
+
+.reel.is-stopped {
+  border-color: var(--brass);
+  background: linear-gradient(#132a20, #0c1a14 30%, #0c1a14 70%, #091511);
+  box-shadow: 0 0 0 2px rgba(232, 184, 75, .3), inset 0 0 24px rgba(0, 0, 0, .75);
+}
+
+.reel.is-stopped .reel__cell--line { animation: reel-pop .24s ease-out; }
+
+@keyframes reel-pop {
+  from { transform: scale(.6); }
+}
+
+.slot-payline {
+  margin: 14px 0 0;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--cream-dim);
+}
+
+.slot-actions {
+  display: flex;
+  justify-content: center;
+  gap: 13px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.slot-actions .btn { min-width: 120px; }
+
+.history__item.is-win {
+  color: var(--jade);
+  border-color: rgba(61, 220, 151, .5);
+  background: rgba(61, 220, 151, .08);
+}
 
 /* ---------- 弹珠机难度选择 ---------- */
 
@@ -855,6 +967,10 @@ body::before {
   .chip-btn { width: 58px; height: 58px; font-size: 13.5px; }
   .hand { min-height: 100px; }
   .bj-actions .btn { flex: 1 1 40%; }
+  .slot-machine { gap: 9px; padding: 18px 12px; }
+  .reel { height: 200px; }
+  .reel__cell { font-size: 27px; }
+  .slot-actions .btn { min-width: 0; flex: 1 1 40%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

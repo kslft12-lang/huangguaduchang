@@ -33,7 +33,7 @@
   var shoe = [];
   var phase = 'bet';     // bet | player | dealer | over
   var busy = false;
-  var picked = 50;       // 当前选中的筹码面额
+  var picked = 50;       // 当前选中的小黄瓜面额
   var roundBet = 0;      // 本局锁定的基础注（双倍时再加一份）
   var staked = 0;        // 本局已投入的总注
   var player = [];
@@ -159,7 +159,7 @@
   async function startRound() {
     var stake = currentBet();
     if (!Casino.canBet(stake)) {
-      Casino.toast('余额不足 ' + stake + ' 筹码', 'lose');
+      Casino.toast('余额不足 ' + stake + ' 小黄瓜', 'lose');
       Casino.sfx.lose();
       return;
     }
