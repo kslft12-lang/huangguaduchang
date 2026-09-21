@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>骰子猜大小 · 🥒黄瓜赌场🥒</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="topbar-root"></div>
+
+<main class="shell">
+
+  <div class="page-head">
+    <h1>骰子猜大小</h1>
+    <p>三颗骰子一把定输赢。开豹子时大小通杀，只有押豹子赢。</p>
+  </div>
+
+  <section class="panel">
+    <h2 class="panel__title">赌桌</h2>
+    <div class="dice-table" id="diceTable">
+      <div id="die0"></div>
+      <div id="die1"></div>
+      <div id="die2"></div>
+    </div>
+    <div class="dice-readout">
+      <div class="readout">本局点数 <b id="sumOut">—</b></div>
+      <div class="readout">本局押注 <b id="betOut">0</b></div>
+      <div class="readout">上局结果 <b id="lastOut">—</b></div>
+    </div>
+
+    <div class="banner" id="banner" data-kind="push">先选筹码，再押 大 / 小 / 豹子。</div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel__title">下注</h2>
+    <div class="bet-row">
+      <span class="bet-row__label">筹码</span>
+      <div class="chips" id="chipRow"></div>
+    </div>
+
+    <div class="targets" id="targetRow">
+      <button class="target" type="button" data-target="小">
+        <b>小</b><span>点数 4–10 · 赔 1:1</span>
+      </button>
+      <button class="target" type="button" data-target="大">
+        <b>大</b><span>点数 11–17 · 赔 1:1</span>
+      </button>
+      <button class="target" type="button" data-target="豹子">
+        <b>豹子</b><span>三颗同点 · 赔 24:1</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel__title">最近 10 局</h2>
+    <div class="history" id="history"><span class="readout">还没有记录</span></div>
+  </section>
+
+</main>
+
+<script src="js/common.js"></script>
+<script src="js/die.js"></script>
+<script src="js/dice.js"></script>
+</body>
+</html>

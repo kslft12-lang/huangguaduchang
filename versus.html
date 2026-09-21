@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>骰子比大小 · 🥒黄瓜赌场🥒</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="topbar-root"></div>
+
+<main class="shell">
+
+  <div class="page-head">
+    <h1>骰子比大小</h1>
+    <p>庄家先掷三颗骰子，但只亮出其中一颗，另外两颗扣着。你据此决定按原注继续，还是按这颗骰子定价的赔率加注。</p>
+  </div>
+
+  <div class="table-grid">
+    <section class="panel">
+      <h2 class="panel__title">牌桌</h2>
+
+      <div class="hand-zone">
+        <div class="hand-zone__head">
+          <span class="hand-zone__name">庄家（先手）</span>
+          <span class="badge badge--lg" id="dealerBadge">—</span>
+        </div>
+        <div class="hand" id="dealerHand"></div>
+      </div>
+
+      <div class="hand-zone">
+        <div class="hand-zone__head">
+          <span class="hand-zone__name">你</span>
+          <span class="badge badge--lg" id="playerBadge">—</span>
+        </div>
+        <div class="hand" id="playerHand"></div>
+      </div>
+
+      <p class="declare" id="declare">等待庄家亮点数…</p>
+
+      <div class="bj-actions">
+        <button class="btn btn--lg" id="startBtn" type="button">下注并开局</button>
+        <button class="btn" id="raiseBtn" type="button" hidden>加注</button>
+        <button class="btn btn--ghost" id="keepBtn" type="button" hidden>继续</button>
+      </div>
+
+      <div class="banner" id="banner" data-kind="push">先选筹码，然后按「下注并开局」。庄家先掷三颗、只亮一颗，你看到之后再决定。</div>
+    </section>
+
+    <aside>
+      <section class="panel">
+        <h2 class="panel__title">本局</h2>
+        <div class="stat"><span class="stat__k">底注</span><span class="stat__v" id="baseOut">0</span></div>
+        <div class="stat" style="margin-top:12px"><span class="stat__k">加注</span><span class="stat__v" id="raiseOut">—</span></div>
+        <div class="stat" style="margin-top:12px"><span class="stat__k">胜 / 平 / 负</span><span class="stat__v" id="tally">0 / 0 / 0</span></div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel__title">筹码</h2>
+        <div class="chips" id="chipRow"></div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel__title">最近 8 局</h2>
+        <ul class="log-list" id="logList">
+          <li><span>还没有记录</span></li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel__title">比牌规则</h2>
+        <ul class="rules">
+          <li><b>111（三条一）</b>是最大牌型，但它是"最小点" —— 输给所有普通点数。</li>
+          <li><b>456（顺子）</b>是最大点 —— 通吃普通点数，但被 111 压。</li>
+          <li>其余按三颗骰子的<b>总点数</b>比大小，222~666 这些豹子不特殊。</li>
+          <li>底注赢赔 <b>0.9 倍</b>，平局退本，返还率约 95.5%。</li>
+          <li><b>加注</b>是按庄家亮出的那一颗骰子<b>单独定价</b>的一注，跟另外两颗扣着的无关。
+            亮出的那一颗是<b>随机</b>挑的：</li>
+        </ul>
+        <div class="slots-legend" id="raiseTable"></div>
+      </section>
+    </aside>
+  </div>
+
+</main>
+
+<script src="js/common.js"></script>
+<script src="js/die.js"></script>
+<script src="js/versus-rules.js"></script>
+<script src="js/versus.js"></script>
+</body>
+</html>

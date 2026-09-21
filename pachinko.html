@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>弹珠机 · 🥒黄瓜赌场🥒</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="topbar-root"></div>
+
+<main class="shell">
+
+  <div class="page-head">
+    <h1>弹珠机</h1>
+    <p>投币落珠，穿过铜钉阵掉进底槽。落点赔率 × 下注额就是返还。</p>
+  </div>
+
+  <div class="pachinko-grid">
+    <div>
+      <section class="panel" style="margin-bottom:18px">
+        <h2 class="panel__title">难度</h2>
+        <div class="levels" id="levelRow"></div>
+        <p class="level-blurb" id="levelBlurb"></p>
+      </section>
+
+      <section class="machine">
+        <canvas id="board" role="img" aria-label="弹珠机台面"></canvas>
+        <div class="machine__foot">
+          <span>台面中球 <span class="ball-count" id="ballCount">0</span> 颗</span>
+          <span id="hint">选筹码 → 投币</span>
+        </div>
+      </section>
+    </div>
+
+    <aside>
+      <section class="panel">
+        <h2 class="panel__title">投币</h2>
+        <div class="chips" id="chipRow"></div>
+        <div class="bj-actions">
+          <button class="btn btn--lg" id="dropBtn" type="button">投币</button>
+          <button class="btn btn--ghost" id="clearBtn" type="button">清空台面</button>
+        </div>
+        <div class="banner" id="banner" data-kind="push">选好筹码，按「投币」。</div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel__title">底槽赔率（本关）</h2>
+        <div class="slots-legend" id="legend"></div>
+        <p class="level-note">
+          赔率后面的百分比是 4 万颗球的实测落点概率。越靠边的槽位越难进，赔率越高。
+          换难度会同时换铜钉布局和赔率表；台面上有珠子时会先退还本金。
+        </p>
+      </section>
+    </aside>
+  </div>
+
+</main>
+
+<script src="js/common.js"></script>
+<script src="js/pachinko-core.js"></script>
+<script src="js/pachinko.js"></script>
+</body>
+</html>

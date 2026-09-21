@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🥒黄瓜赌场🥒 · 主页</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="topbar-root"></div>
+
+<main class="shell">
+
+  <div class="hero">
+    <section class="hero__wallet">
+      <p class="hero__label">剩余金额</p>
+      <div class="hero__amount" id="walletAmount">0</div>
+      <p class="hero__sub">开局筹码 1,000 · 四个游戏共用同一份余额</p>
+      <div class="hero__actions">
+        <a class="btn btn--lg" href="dice.html">开始玩</a>
+        <button class="btn btn--ghost" id="resetBtn" type="button">重置筹码为 1,000</button>
+      </div>
+    </section>
+
+    <section class="stats" id="statsBox">
+      <div class="stat"><span class="stat__k">总局数</span><span class="stat__v" id="stRounds">0</span></div>
+      <div class="stat"><span class="stat__k">胜 / 负 / 和</span><span class="stat__v" id="stWLP">0 / 0 / 0</span></div>
+      <div class="stat"><span class="stat__k">累计下注</span><span class="stat__v" id="stWager">0</span></div>
+      <div class="stat"><span class="stat__k">净收益</span><span class="stat__v" id="stNet">0</span></div>
+    </section>
+  </div>
+
+  <div class="game-grid">
+    <a class="game-card" href="dice.html">
+      <div class="game-card__art">
+        <div class="art-die"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="art-die"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <h3 class="game-card__name">骰子猜大小</h3>
+      <p class="game-card__desc">三颗骰子物理抛掷，一把定输赢。押大小赔 1:1，押中豹子赔 24:1。</p>
+      <div class="game-card__odds">押中率 48.6% · 豹子 2.8%</div>
+    </a>
+
+    <a class="game-card" href="versus.html">
+      <div class="game-card__art">
+        <div class="art-die"><i></i><i></i><i></i><i></i><i></i></div>
+        <span class="art-vs">VS</span>
+        <div class="art-die"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <h3 class="game-card__name">骰子比大小</h3>
+      <p class="game-card__desc">庄家先掷三颗骰子，只亮出其中一颗，另外两颗扣着。你看到这一颗再决定继续还是加注。</p>
+      <div class="game-card__odds">亮 6 点加注赔 2.86 倍 · 亮 1 点不可加注</div>
+    </a>
+
+    <a class="game-card" href="blackjack.html">
+      <div class="game-card__art">
+        <div class="art-card">A</div>
+        <div class="art-card">K</div>
+      </div>
+      <h3 class="game-card__name">21点</h3>
+      <p class="game-card__desc">六副牌牌靴。要牌、停牌、双倍，跟庄家比谁更接近 21 点。</p>
+      <div class="game-card__odds">黑杰克赔 3:2 · 庄家 17 点停牌</div>
+    </a>
+
+    <a class="game-card" href="pachinko.html">
+      <div class="game-card__art">
+        <div class="art-pegs"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <h3 class="game-card__name">弹珠机</h3>
+      <p class="game-card__desc">投币落珠穿过铜钉阵掉进底槽。三种难度各有不同的铜钉布局和赔率表。</p>
+      <div class="game-card__odds">简单 2× · 普通 5× · 困难 10×</div>
+    </a>
+  </div>
+
+  <section class="panel" style="margin-top:26px">
+    <h2 class="panel__title">规则速查</h2>
+    <ul class="rules">
+      <li><b>余额</b>存在浏览器本地（localStorage），四个游戏页面共用；关掉网页再打开，筹码还在。</li>
+      <li><b>骰子猜大小</b>：三颗骰子点数 4–10 为小，11–17 为大；开出豹子时大小通杀，只有押豹子赢。</li>
+      <li><b>骰子比大小</b>：庄家先掷三颗骰子但<b>只亮出其中一颗</b>，另外两颗扣着。你看到这一颗再选「继续」或「加注」，最后开奖。
+        比牌是<b>循环大小</b>：111（三条一）压 456（顺子），456 通吃普通点数，而 111 又是"最小点"输给普通点数。
+        222~666 这些豹子不特殊，按总点数参与比较。加注按亮出的那一颗单独定价：亮 6 点赔 2.86 倍，亮 1 点则不可加注。</li>
+      <li><b>21点</b>：A 可当 1 或 11；两张牌凑成 21 点即黑杰克，赔 3:2。庄家不足 17 点必须继续要牌。</li>
+      <li><b>弹珠机</b>：底槽赔率 × 下注额就是返还，1× 保本，正中空槽 0× 全输。可同时投多颗珠。
+        三档难度换的是<b>铜钉布局</b>和<b>赔率表</b>：简单最稳（最高 2×，最差只输一半），普通均衡（最高 5×），
+        困难最凶（最高 10×，正中空槽概率约一半）。</li>
+      <li>余额低于最小下注（10）时，顶栏会出现<b>领取救济金</b>按钮。</li>
+    </ul>
+  </section>
+
+</main>
+
+<script src="js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+  Casino.mountHeader('index');
+
+  var amountEl = document.getElementById('walletAmount');
+  var stRounds = document.getElementById('stRounds');
+  var stWLP = document.getElementById('stWLP');
+  var stWager = document.getElementById('stWager');
+  var stNet = document.getElementById('stNet');
+
+  function render() {
+    var b = Casino.getBalance();
+    var s = Casino.getStats();
+    var n = function (v) { return v.toLocaleString('zh-CN'); };
+
+    amountEl.textContent = n(b);
+    amountEl.style.color = b < 10 ? 'var(--coral)' : '';
+
+    stRounds.textContent = n(s.rounds);
+    stWLP.textContent = s.wins + ' / ' + s.losses + ' / ' + s.pushes;
+    stWager.textContent = n(s.wagered);
+
+    stNet.textContent = (s.net > 0 ? '+' : '') + n(s.net);
+    stNet.dataset.ton = s.net > 0 ? 'up' : (s.net < 0 ? 'down' : '');
+  }
+
+  document.getElementById('resetBtn').addEventListener('click', function () {
+    Casino.reset();
+    Casino.clearStats();
+    render();
+  });
+
+  Casino.onChange(render);
+  render();
+})();
+</script>
+</body>
+</html>

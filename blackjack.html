@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>21点 · 🥒黄瓜赌场🥒</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="topbar-root"></div>
+
+<main class="shell">
+
+  <div class="page-head">
+    <h1>21点</h1>
+    <p>六副牌牌靴，庄家 17 点停牌。黑杰克赔 3:2，平局退还本金。</p>
+  </div>
+
+  <div class="table-grid">
+    <section class="panel">
+      <h2 class="panel__title">牌桌</h2>
+
+      <div class="hand-zone">
+        <div class="hand-zone__head">
+          <span class="hand-zone__name">庄家</span>
+          <span class="badge" id="dealerBadge">—</span>
+        </div>
+        <div class="hand" id="dealerHand"></div>
+      </div>
+
+      <div class="hand-zone">
+        <div class="hand-zone__head">
+          <span class="hand-zone__name">闲家（你）</span>
+          <span class="badge" id="playerBadge">—</span>
+        </div>
+        <div class="hand" id="playerHand"></div>
+      </div>
+
+      <div class="bj-actions">
+        <button class="btn" id="dealBtn" type="button">发牌</button>
+        <button class="btn btn--ghost" id="hitBtn" type="button" disabled>要牌</button>
+        <button class="btn btn--ghost" id="standBtn" type="button" disabled>停牌</button>
+        <button class="btn btn--ghost" id="doubleBtn" type="button" disabled>双倍</button>
+      </div>
+
+      <div class="banner" id="banner" data-kind="push">先选筹码，然后按「发牌」。</div>
+    </section>
+
+    <aside>
+      <section class="panel">
+        <h2 class="panel__title">本局</h2>
+        <div class="stat"><span class="stat__k">当前下注</span><span class="stat__v" id="betOut">0</span></div>
+        <div class="shoe" style="margin-top:12px">
+          <span>牌靴</span>
+          <span class="shoe__bar"><span class="shoe__fill" id="shoeFill" style="width:100%"></span></span>
+          <span id="shoeNum">312</span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel__title">筹码</h2>
+        <div class="chips" id="chipRow"></div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel__title">最近 8 局</h2>
+        <ul class="log-list" id="logList">
+          <li><span>还没有记录</span></li>
+        </ul>
+      </section>
+    </aside>
+  </div>
+
+</main>
+
+<script src="js/common.js"></script>
+<script src="js/blackjack.js"></script>
+</body>
+</html>
