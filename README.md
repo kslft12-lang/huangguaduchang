@@ -14,6 +14,21 @@ python -m http.server 8777 --bind 127.0.0.1
 
 > 直接双击 `index.html` 也能玩，但 `file://` 下 localStorage 的隔离行为各浏览器不一致，建议用本地服务器。
 
+## 部署
+
+线上地址：<https://kslft12-lang.github.io/huangguaduchang/>
+
+源仓库是 public 的 <https://github.com/kslft12-lang/huangguaduchang>，Pages 发布设置为 `main` 分支根目录。
+
+纯静态、无构建步骤，所以**部署就是 `git push`**，推上去 GitHub 自动重新发布，几十秒生效：
+
+```bash
+git push origin main
+```
+
+不需要填构建命令或产物目录，也不需要 `.nojekyll`（仓库里没有下划线开头的文件或目录）。
+唯一的约束是页面内的资源引用必须保持相对路径，否则子路径 `/huangguaduchang/` 下会拿不到文件。
+
 ## 玩法
 
 | 页面 | 规则 | 关键赔率 |
