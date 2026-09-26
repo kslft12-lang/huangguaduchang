@@ -80,7 +80,10 @@
       });
       conn = c;
 
+      // 事件都带连接归属守卫：换连接后旧 client 迟到的 close 不能把新连接的
+      // connReady 打回 false——否则所有 publish 会永远卡进发送队列（他人无法加入的元凶）
       c.on('connect', function () {
+        if (conn !== c) return;
         everOnline = true;
         connReady = true;
         status('online');
@@ -93,11 +96,13 @@
         });
       });
       c.on('close', function () {
+        if (conn !== c) return;
         connReady = false;
         status('offline');
         stopHeartbeat();
       });
       c.on('error', function () {
+        if (conn !== c) return;
         if (!everOnline && brokerIdx < BROKERS.length - 1) {
           brokerIdx++;
           c.end(true);
@@ -106,7 +111,7 @@
           status('unavailable');
         }
       });
-      c.on('message', onMessage);
+      c.on('message', function (t, p) { if (conn === c) onMessage(t, p); });
     }
 
     function startHeartbeat() {
@@ -176,8 +181,14 @@
         var now = Date.now();
         var list = [];
         for (var k in rooms) {
-          if (now - rooms[k].seen > 20000) delete rooms[k];
-          else list.push({ code: rooms[k].code, host: rooms[k].host, n: rooms[k].n, phase: rooms[k].phase });
+          if (now - rooms[k].seen > 20000) {
+            delete rooms[k];
+            // 房主死了没来得及注销：任何人顺手把 broker 上的 retained 清掉，
+            // 不然每个新订阅者都会永远看到这个僵尸房（活房 5s 内会重发，误清能自愈）
+            publish(PREFIX + '/pub/' + k, null, 0, true);
+          } else {
+            list.push({ code: rooms[k].code, host: rooms[k].host, n: rooms[k].n, phase: rooms[k].phase });
+          }
         }
         list.sort(function (a, b) { return a.code < b.code ? -1 : 1; });
         opts.onLobby(list);

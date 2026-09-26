@@ -149,7 +149,6 @@
   function enterRoom() {
     mode = 'room';
     clearTimeout(joinTimer);
-    view = null;
     selected = [];
     els.lobbyPanel.hidden = true;
     els.roomPanel.hidden = false;
@@ -297,7 +296,13 @@
     if (room.seats.length >= 3) { net.toPlayer(msg.pid, { t: 'full' }); return; }
     if (room.game) { net.toPlayer(msg.pid, { t: 'busy' }); return; }
     for (var i = 0; i < room.seats.length; i++) {
-      if (room.seats[i].pid === msg.pid) return;      // 已在座
+      if (room.seats[i].pid === msg.pid) {
+        // 重复 join：welcome/快照可能在路上丢了，幂等重发，别让人卡在大厅
+        room.seq++;
+        net.toPlayer(msg.pid, { t: 'welcome' });
+        net.toPlayer(msg.pid, buildView(i));
+        return;
+      }
     }
     room.seats.push({ pid: msg.pid, name: String(msg.name || '玩家').slice(0, 8), joinedAt: Date.now() });
     room.lastPing[msg.pid] = Date.now();
@@ -737,4 +742,13 @@
   paintStatus('connecting');
   ensureNet();
   net.browse(true);
+
+  // 调试钩子：控制台里看会话内部状态（不影响正常逻辑）
+  window.__ddzDebug = function () {
+    return {
+      mode: mode, isHost: isHost,
+      room: room ? { code: room.code, seats: room.seats, phase: room.game ? room.game.phase : 'lobby', seq: room.seq } : null,
+      view: view
+    };
+  };
 })();
