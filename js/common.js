@@ -48,7 +48,9 @@
     ['versus', '骰子比大小', 'versus.html'],
     ['blackjack', '21点', 'blackjack.html'],
     ['pachinko', '弹珠机', 'pachinko.html'],
-    ['tiger', '老虎机', 'tiger.html']
+    ['tiger', '老虎机', 'tiger.html'],
+    ['ddz', '斗地主', 'ddz.html'],
+    ['scratch', '刮刮乐', 'scratch.html']
   ];
 
   var topbarEl = null;
@@ -165,6 +167,7 @@
   var sfx = {
     enabled: false,
     ctx: null,
+    noiseBuf: null,
     init: function () {
       if (this.enabled) return;
       this.enabled = true;
@@ -208,6 +211,97 @@
     },
     click: function () { this.tone(300, 0.05, 'square', 0.035); },
     roll: function () { this.tone(180, 0.05, 'sawtooth', 0.03); },
+    /** 短促高频咔哒：老虎机卷轴每划过一格响一次 */
+    tick: function () { this.tone(1250, 0.02, 'square', 0.016); },
+
+    /** 白噪声爆发，freq 是带通中心频率（掷骰子撞击、沙锤一类质感）；
+        q 是带通品质因数，越高越"金属"（不传用 0.9 的宽钝声） */
+    noise: function (dur, gain, freq, delay, q) {
+      var ctx = this.audio();
+      if (!ctx) return;
+      try {
+        if (!this.noiseBuf) {
+          var len = Math.floor(ctx.sampleRate * 0.15);
+          var buf = ctx.createBuffer(1, len, ctx.sampleRate);
+          var data = buf.getChannelData(0);
+          for (var i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+          this.noiseBuf = buf;
+        }
+        var t0 = ctx.currentTime + (delay || 0);
+        var src = ctx.createBufferSource();
+        src.buffer = this.noiseBuf;
+        var bp = ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.value = freq;
+        bp.Q.value = q || 0.9;
+        var amp = ctx.createGain();
+        amp.gain.setValueAtTime(gain, t0);
+        amp.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+        src.connect(bp).connect(amp).connect(ctx.destination);
+        src.start(t0);
+        src.stop(t0 + dur + 0.02);
+      } catch (e) { /* 播放失败不影响游戏 */ }
+    },
+
+    /** 掷骰子撞击桌面：v 是冲击速度，越大越响、闷锤越沉（弹跳逐次衰减） */
+    diceHit: function (v) {
+      var k = Math.min(1, v / 12);
+      this.noise(0.04 + 0.05 * k, 0.02 + 0.075 * k, 1400 + Math.random() * 900);
+      this.tone(90 + 70 * k, 0.06 + 0.04 * k, 'triangle', 0.012 + 0.05 * k);
+    },
+
+    /* ---------- 弹珠机撞击声（物理步 120Hz 会刷出海量接触，全放会糊成一片） ---------- */
+    _hitWin: 0,      // 限流窗口起点
+    _hitLeft: 0,     // 窗口内剩余配额
+    _hitLast: 0,     // 上一声的时刻，相邻两声至少隔 16ms
+    _thudLast: 0,
+
+    /** 弹珠撞击：type 'peg' 铜钉 | 'ball' 弹珠互撞 | 'wall' 壁板 | 'flipper' 翻板；
+        v 是撞击速度，越大越响越亮；配额耗尽或间隔太近的接触直接丢弃 */
+    marble: function (type, v) {
+      var now = Date.now();
+      if (now - this._hitWin > 100) { this._hitWin = now; this._hitLeft = 6; }
+      if (this._hitLeft <= 0 || now - this._hitLast < 16) return;
+      var k = Math.min(1, v / 7);
+      if (k < 0.1) return;
+      this._hitLeft--;
+      this._hitLast = now;
+      switch (type) {
+        case 'peg':      // 钢珠碰铜钉：高频金属 ping
+          this.tone(2500 + Math.random() * 1100 - 300 * k, 0.03 + 0.025 * k, 'triangle', 0.01 + 0.04 * k);
+          this.noise(0.015 + 0.015 * k, 0.006 + 0.03 * k, 5200 + Math.random() * 1600, 0, 5);
+          break;
+        case 'ball':     // 玻璃珠互撞：更脆、更高、更短
+          this.tone(3300 + Math.random() * 900, 0.022, 'sine', 0.012 + 0.05 * k);
+          this.noise(0.012, 0.005 + 0.025 * k, 6800, 0, 6);
+          break;
+        case 'wall':     // 壁板：比钉子闷
+          this.tone(200 + 90 * k, 0.05 + 0.03 * k, 'triangle', 0.012 + 0.04 * k);
+          this.noise(0.03, 0.008 + 0.025 * k, 1100, 0, 1.2);
+          break;
+        case 'flipper':  // 翻板：木头 thunk
+          this.tone(430 + 120 * k, 0.06, 'triangle', 0.012 + 0.04 * k);
+          this.noise(0.035, 0.008 + 0.03 * k, 1900, 0, 1.5);
+          break;
+      }
+    },
+
+    /** 珠子落进底槽的闷响（多颗同落时限流，只响一声） */
+    thud: function () {
+      var now = Date.now();
+      if (now - this._thudLast < 70) return;
+      this._thudLast = now;
+      this.noise(0.05, 0.05, 300, 0, 1.4);
+      this.tone(140, 0.09, 'triangle', 0.05);
+    },
+
+    /** 大奖 fanfare（黄瓜三连）：上行琶音接长尾和弦 */
+    bigwin: function () {
+      var self = this;
+      [523, 659, 784, 1047].forEach(function (f, i) { self.tone(f, 0.18, 'triangle', 0.05, i * 0.09); });
+      [1047, 1319, 1568].forEach(function (f) { self.tone(f, 0.55, 'triangle', 0.045, 0.42); });
+    },
+
     win: function () {
       var self = this;
       [523, 659, 784, 1047].forEach(function (f, i) { self.tone(f, 0.22, 'triangle', 0.05, i * 0.075); });
@@ -251,6 +345,14 @@
     payout: function (n, net) {
       if (n > 0) write(balance + n, true);
       this.record(net || 0);
+    },
+
+    /** 整局净结果直接入账（斗地主联机结算用）：赢加输扣，余额地板 0 */
+    applyNet: function (net) {
+      net = Math.round(Number(net) || 0);
+      if (net > 0) write(balance + net, true);
+      else if (net < 0) write(balance + net, true);
+      this.record(net, net === 0 ? 'push' : undefined);
     },
 
     /** 只记账不动余额（比如输掉已扣的本金）；余额没变但统计变了，同样要通知界面刷新 */

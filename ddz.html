@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>斗地主 · 🥒黄瓜赌场🥒</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="topbar-root"></div>
+
+<main class="shell">
+
+  <div class="page-head">
+    <h1>斗地主</h1>
+    <p>三人联机斗地主。进公开房凑人，或创建私密房把房间码发给朋友。每局基准注 100 小黄瓜，
+    地主输赢双倍，炸弹每个翻倍（最多 ×8），春天再翻倍——结算由各人本机入账。</p>
+  </div>
+
+  <section class="panel" id="lobbyPanel">
+    <h2 class="panel__title">联机大厅</h2>
+    <div class="ddz-lobby">
+      <div class="ddz-me">
+        <label class="ddz-namewrap">昵称
+          <input id="nameInput" maxlength="8" placeholder="玩家" autocomplete="off">
+        </label>
+        <span class="ddz-status"><i class="dot" id="netDot"></i><span id="netText">未连接</span></span>
+      </div>
+      <div class="ddz-create">
+        <button class="btn" id="createPubBtn" type="button">创建公开房</button>
+        <button class="btn btn--ghost" id="createPrivBtn" type="button">创建私密房</button>
+      </div>
+      <div class="ddz-join">
+        <input id="codeInput" class="ddz-code-input" maxlength="4" placeholder="房间码" autocomplete="off">
+        <button class="btn" id="joinBtn" type="button">凭码加入</button>
+      </div>
+      <h3 class="ddz-sub">公开房间</h3>
+      <div class="room-list" id="roomList"><p class="room-empty">正在找房间…</p></div>
+      <p class="ddz-privnote">私密房间不出现在列表里，凭 4 位房间码加入。</p>
+    </div>
+  </section>
+
+  <section class="panel" id="roomPanel" hidden>
+    <div class="ddz-roomhead">
+      <h2 class="panel__title">房间 <span class="ddz-code" id="roomCode"></span>
+        <span class="ddz-badge" id="roomKind"></span></h2>
+      <div class="ddz-roombtns">
+        <button class="btn btn--ghost btn--sm" id="copyBtn" type="button">复制房号</button>
+        <button class="btn btn--ghost btn--sm" id="leaveBtn" type="button">退出房间</button>
+      </div>
+    </div>
+    <div class="ddz-seats" id="seatRow"></div>
+    <p class="ddz-roomhint" id="roomHint"></p>
+    <div class="bj-actions"><button class="btn btn--lg" id="startBtn" type="button" hidden>开始对局</button></div>
+  </section>
+
+  <section class="panel ddz-table" id="tablePanel" hidden>
+    <div class="ddz-opp-row">
+      <div class="opp" id="oppLeft"></div>
+      <div class="ddz-center">
+        <div class="ddz-kitty" id="kittyBox"></div>
+        <div class="ddz-mult" id="multBox"></div>
+      </div>
+      <div class="opp" id="oppRight"></div>
+    </div>
+    <div class="ddz-felt">
+      <div class="ddz-played" id="tableCards"></div>
+      <div class="ddz-note" id="tableNote"></div>
+    </div>
+    <div class="ddz-merow">
+      <div class="ddz-meinfo" id="meInfo"></div>
+      <div class="ddz-bidbar" id="bidBar" hidden>
+        <button class="btn" data-bid="0" type="button">不叫</button>
+        <button class="btn" data-bid="1" type="button">1 分</button>
+        <button class="btn" data-bid="2" type="button">2 分</button>
+        <button class="btn" data-bid="3" type="button">3 分</button>
+      </div>
+      <div class="ddz-actions" id="playBar" hidden>
+        <button class="btn" id="playBtn" type="button">出牌</button>
+        <button class="btn btn--ghost" id="passBtn" type="button">不出</button>
+      </div>
+    </div>
+    <div class="ddz-hand" id="myHand"></div>
+  </section>
+
+  <div class="ddz-result" id="resultBox" hidden></div>
+
+</main>
+
+<script src="js/common.js"></script>
+<script src="js/lib/mqtt.min.js"></script>
+<script src="js/ddz-rules.js"></script>
+<script src="js/ddz-net.js"></script>
+<script src="js/ddz.js"></script>
+</body>
+</html>

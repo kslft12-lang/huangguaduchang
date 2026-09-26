@@ -112,6 +112,7 @@
     objs.forEach(function (d, i) {
       Die.roll(d, faces[i], {
         delay: i * 90,
+        onBounce: function (v) { Casino.sfx.diceHit(v); },
         onDone: function () { if (--left === 0) done(); }
       });
     });

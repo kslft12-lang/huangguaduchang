@@ -16,7 +16,7 @@
     <section class="hero__wallet">
       <p class="hero__label">剩余金额</p>
       <div class="hero__amount" id="walletAmount">0</div>
-      <p class="hero__sub">开局小黄瓜 1,000 · 五个游戏共用同一份余额</p>
+      <p class="hero__sub">开局小黄瓜 1,000 · 六个游戏共用同一份余额</p>
       <div class="hero__actions">
         <a class="btn btn--lg" href="dice.html">开始玩</a>
         <button class="btn btn--ghost" id="resetBtn" type="button">重置为 1,000 小黄瓜</button>
@@ -80,12 +80,30 @@
       <p class="game-card__desc">三列卷轴高速旋转，按「停止」依次定格。三列图形相同就中奖，黄瓜三连是最终大奖。</p>
       <div class="game-card__odds">七种图形 · 全凭手气</div>
     </a>
+
+    <a class="game-card" href="ddz.html">
+      <div class="game-card__art">
+        <span class="art-slot">🃏</span><span class="art-slot">👑</span><span class="art-slot">🥒</span>
+      </div>
+      <h3 class="game-card__name">斗地主</h3>
+      <p class="game-card__desc">三人联机斗地主。进公开房凑人，或建私密房凭 4 位房间码邀请朋友。叫分当地主，炸弹翻倍。</p>
+      <div class="game-card__odds">联机 3 人 · 地主输赢双倍</div>
+    </a>
+
+    <a class="game-card" href="scratch.html">
+      <div class="game-card__art">
+        <span class="art-scr">❔</span><span class="art-scr">❔</span><span class="art-scr art-scr--open">🥒</span>
+      </div>
+      <h3 class="game-card__name">刮刮乐</h3>
+      <p class="game-card__desc">买一张券，用手指刮开银涂层。刮出两个相同图案即按倍率赔付，三个相同奖金翻倍，黄瓜对是大奖。</p>
+      <div class="game-card__odds">中奖面约 49% · 黄瓜对返 20×</div>
+    </a>
   </div>
 
   <section class="panel" style="margin-top:26px">
     <h2 class="panel__title">规则速查</h2>
     <ul class="rules">
-      <li><b>余额</b>存在浏览器本地（localStorage），五个游戏页面共用；关掉网页再打开，小黄瓜还在。</li>
+      <li><b>余额</b>存在浏览器本地（localStorage），六个游戏页面共用；关掉网页再打开，小黄瓜还在。</li>
       <li><b>骰子猜大小</b>：三颗骰子点数 4–10 为小，11–17 为大；开出豹子时大小通杀，只有押豹子赢。
         另有两个新注区：<b>顺子</b>（任意三连 123/234/345/456 · 赔 7:1）和 <b>456</b>（赔 30:1），开出对应点数即中。</li>
       <li><b>骰子比大小</b>：庄家先掷三颗骰子但<b>只亮出其中一颗</b>，另外两颗扣着。你看到这一颗再选「继续」或「加注」，最后开奖。
@@ -98,7 +116,9 @@
         三档难度换的是<b>钉阵密度</b>、<b>人字檐宽度</b>和<b>翻板开口</b>：简单最稳（中间 2×，被拨到两侧最差只输三成），
         普通居中（中间 3×），困难最凶（中间 5×，被拨到两侧最差亏一半）。</li>
       <li><b>老虎机</b>：下注后按「开始」让三个卷轴高速旋转（快得看不清），再按「停止」依次停下列子。
-        三列图形相同就中奖——七种图形：橘子、苹果、包子、蟑螂、胡萝卜、蘑菇，以及<b>最终大奖黄瓜</b>。</li>
+        三列图形相同就中奖——七种图形：橘子、苹果、包子、有一天、胡萝卜、蘑菇，以及<b>最终大奖黄瓜</b>。</li>
+      <li><b>刮刮乐</b>：买一张券，刮开三格银涂层。刮出<b>两个相同图案</b>即按该图案倍率返还（有一天 ×0.5 拿回一半、橘子 ×1 保本、
+        苹果 ×2、胡萝卜 ×3、蘑菇 ×4、包子 ×6、<b>黄瓜 ×20</b>），三个相同奖金<b>翻倍</b>。刮掉大半自动整格揭开，也可以一键刮开。</li>
       <li>余额低于最小下注（10）时，顶栏会出现<b>领取救济金</b>按钮。</li>
     </ul>
   </section>

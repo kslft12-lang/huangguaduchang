@@ -138,6 +138,7 @@
       if (d.y <= 0) {
         d.y = 0;
         if (-d.vy > STOP_VY) {
+          if (d.onBounce) d.onBounce(-d.vy);   // 撞击钩子，参数是冲击速度
           d.vy = -d.vy * REST;
           // 每次弹跳都换一点自旋，看起来才不像机械重复
           d.vrx = d.vrx * 0.5 + (Math.random() - 0.5) * 11;
@@ -202,7 +203,7 @@
     var d = {
       slot: slot, shadow: shadow, el: el,
       y: 0, vy: 0, rx: 0, ry: 0, rz: 0, vrx: 0, vry: 0, vrz: 0,
-      face: 1, hidden: false, phase: 'idle', t: 0, wait: 0, quarter: 0, onDone: null
+      face: 1, hidden: false, phase: 'idle', t: 0, wait: 0, quarter: 0, onDone: null, onBounce: null
     };
     paint(d);
     return d;
@@ -238,6 +239,7 @@
     die.wait = opts.delay || 0;
     die.quarter = Math.floor(Math.random() * 4);
     die.onDone = opts.onDone || null;
+    die.onBounce = opts.onBounce || null;
 
     if (reduced()) {
       set(die, face);

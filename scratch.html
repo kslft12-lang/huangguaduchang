@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>刮刮乐 · 🥒黄瓜赌场🥒</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="topbar-root"></div>
+
+<main class="shell">
+
+  <div class="page-head">
+    <h1>刮刮乐</h1>
+    <p>买一张券，用手指或鼠标刮开银涂层；刮出<b>两个相同</b>图案即按倍率返还，<b>三个相同</b>奖金翻倍，黄瓜对是最终大奖。</p>
+  </div>
+
+  <section class="panel">
+    <h2 class="panel__title">奖券</h2>
+    <div class="ticket" id="ticket">
+      <div class="ticket__head">
+        <span class="ticket__brand">🥒 黄瓜刮刮乐</span>
+        <span class="ticket__no" id="ticketNo">NO.——</span>
+      </div>
+      <div class="ticket__cells">
+        <div class="scr-cell is-idle" id="cell0"><span class="scr-cell__prize">❔</span><canvas class="scr-cell__foil"></canvas></div>
+        <div class="scr-cell is-idle" id="cell1"><span class="scr-cell__prize">❔</span><canvas class="scr-cell__foil"></canvas></div>
+        <div class="scr-cell is-idle" id="cell2"><span class="scr-cell__prize">❔</span><canvas class="scr-cell__foil"></canvas></div>
+      </div>
+      <p class="ticket__foot">两同即中 · 三同翻倍 · 刮掉大半自动整格揭开</p>
+    </div>
+    <div class="slot-actions">
+      <button class="btn btn--lg" id="buyBtn" type="button">来一张</button>
+      <button class="btn btn--ghost" id="openBtn" type="button" disabled>一键刮开</button>
+    </div>
+    <div class="banner" id="banner" data-kind="push">选好票价，按「来一张」买券开刮。</div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel__title">票价</h2>
+    <div class="bet-row">
+      <span class="bet-row__label">小黄瓜</span>
+      <div class="chips" id="chipRow"></div>
+    </div>
+    <p class="level-note">每张券的图案在买下那一刻就已随机定死，刮开只是揭晓——快慢手都一样。</p>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel__title">奖级表</h2>
+    <div class="prize-table">
+      <div class="slot-line" data-tier="zero"><span><img class="sym-img" src="img/yiyouyitian.png" alt="有一天"> 有一天 ×0.5</span><b>拿回一半</b></div>
+      <div class="slot-line" data-tier="flat"><span>🍊 橘子 ×1</span><b>保本</b></div>
+      <div class="slot-line" data-tier="low"><span>🍎 苹果 ×2</span><b>净赚 1 倍</b></div>
+      <div class="slot-line" data-tier="low"><span>🥕 胡萝卜 ×3</span><b>净赚 2 倍</b></div>
+      <div class="slot-line" data-tier="mid"><span>🍄 蘑菇 ×4</span><b>净赚 3 倍</b></div>
+      <div class="slot-line" data-tier="mid"><span>🥟 包子 ×6</span><b>净赚 5 倍</b></div>
+      <div class="slot-line" data-tier="high"><span>🥒 黄瓜 ×20</span><b>净赚 19 倍</b></div>
+    </div>
+    <p class="level-note">三个相同，该档奖金再翻倍（黄瓜三同返 40×）。图案按各自概率独立开出，有一天最常见、黄瓜最稀有。</p>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel__title">最近 10 局</h2>
+    <div class="history" id="history"><span class="readout">还没有记录</span></div>
+  </section>
+
+</main>
+
+<script src="js/common.js"></script>
+<script src="js/scratch.js"></script>
+</body>
+</html>

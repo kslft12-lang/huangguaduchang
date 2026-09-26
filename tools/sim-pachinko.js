@@ -41,6 +41,7 @@ function run(key, n, seed) {
   if (arg('flipy', null) !== null) cfg.FLIPPER_Y = Number(arg('flipy'));
   if (arg('flipperw', null) !== null) cfg.FLIPPER_HALF_W = Number(arg('flipperw'));
   if (arg('flipperspeed', null) !== null) cfg.FLIPPER_SPEED = Number(arg('flipperspeed'));
+  if (arg('assist', null) !== null) cfg.ASSIST_SPEED = Number(arg('assist'));
   if (arg('rows', null) !== null) Core.LEVELS[key].rows = Number(arg('rows'));
   if (arg('dy', null) !== null) Core.LEVELS[key].dy = Number(arg('dy'));
 

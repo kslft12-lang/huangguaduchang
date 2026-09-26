@@ -21,13 +21,13 @@
     <h2 class="panel__title">机器</h2>
     <div class="slot-machine" id="machine">
       <div class="reel" id="reel0">
-        <span class="reel__cell">🥕</span><span class="reel__cell">🍊</span><span class="reel__cell reel__cell--line">🥒</span><span class="reel__cell">🍎</span><span class="reel__cell">🪳</span>
+        <span class="reel__cell">🥕</span><span class="reel__cell">🍊</span><span class="reel__cell reel__cell--line">🥒</span><span class="reel__cell">🍎</span><span class="reel__cell"><img class="sym-img" src="img/yiyouyitian.png" alt="有一天"></span>
       </div>
       <div class="reel" id="reel1">
-        <span class="reel__cell">🍄</span><span class="reel__cell">🪳</span><span class="reel__cell reel__cell--line">🍊</span><span class="reel__cell">🥟</span><span class="reel__cell">🥕</span>
+        <span class="reel__cell">🍄</span><span class="reel__cell"><img class="sym-img" src="img/yiyouyitian.png" alt="有一天"></span><span class="reel__cell reel__cell--line">🍊</span><span class="reel__cell">🥟</span><span class="reel__cell">🥕</span>
       </div>
       <div class="reel" id="reel2">
-        <span class="reel__cell">🍎</span><span class="reel__cell">🥕</span><span class="reel__cell reel__cell--line">🍄</span><span class="reel__cell">🪳</span><span class="reel__cell">🍊</span>
+        <span class="reel__cell">🍎</span><span class="reel__cell">🥕</span><span class="reel__cell reel__cell--line">🍄</span><span class="reel__cell"><img class="sym-img" src="img/yiyouyitian.png" alt="有一天"></span><span class="reel__cell">🍊</span>
       </div>
     </div>
     <p class="slot-payline">三列中央那一行是兑奖线，只有停在这一线上的三个图形才算数</p>
@@ -50,6 +50,13 @@
   <section class="panel">
     <h2 class="panel__title">最近 10 局</h2>
     <div class="history" id="history"><span class="readout">还没有记录</span></div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel__title">奖级表</h2>
+    <div class="prize-table" id="prizeTable"></div>
+    <p class="level-note">三列兑奖线开出<b>三个相同</b>图案即按上表倍率返还（倍率含本金，押 100 开橘子三连返 2,200）。
+      图案按各自概率独立开出，有一天最常见、黄瓜最稀有；加权返还率约 82.5%。</p>
   </section>
 
 </main>

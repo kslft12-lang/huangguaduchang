@@ -170,6 +170,7 @@
   /* ---------- 结算 ---------- */
 
   function land(b) {
+    Casino.sfx.thud();
     var idx = Core.slotOf(b.x, cfg);
     var mult = lvl.mults[idx];
     var ret = Math.round(b.stake * mult);
@@ -191,6 +192,7 @@
 
   var acc = 0;
   var last = 0;
+  var hitEvents = [];   // 物理步推出的撞击事件，浏览器拿来播撞击音效（模拟器不用）
 
   function frame(t) {
     if (!last) last = t;
@@ -201,14 +203,19 @@
     var scale = cfg.STEP / (1000 / 60);
     while (acc >= cfg.STEP) {
       cfg.tick = (cfg.tick || 0) + 1;   // 每物理步推进一次挡板相位（与模拟器同速率）
+      hitEvents.length = 0;
       for (var i = balls.length - 1; i >= 0; i--) {
         var b = balls[i];
-        Core.step(b, pegs, cfg, Math.random, scale);
+        Core.step(b, pegs, cfg, Math.random, scale, hitEvents);
         if (Core.landed(b, cfg)) {
           b.y = H - 4 - cfg.BALL_R;
           balls.splice(i, 1);
           land(b);
         }
+      }
+      Core.collideBalls(balls, cfg, hitEvents);   // 台面多颗珠时互相碰撞
+      for (var e = 0; e < hitEvents.length; e++) {
+        Casino.sfx.marble(hitEvents[e].t, hitEvents[e].v);
       }
       acc -= cfg.STEP;
     }

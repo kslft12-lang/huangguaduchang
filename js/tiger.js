@@ -13,7 +13,7 @@
     { name: '橘子',   ch: '🍊', w: 0.22, mult: 22 },
     { name: '苹果',   ch: '🍎', w: 0.15, mult: 28 },
     { name: '包子',   ch: '🥟', w: 0.07, mult: 70 },
-    { name: '蟑螂',   ch: '🪳', w: 0.30, mult: 13 },
+    { name: '有一天', ch: '🪳', w: 0.30, mult: 13, img: 'img/yiyouyitian.png' },
     { name: '胡萝卜', ch: '🥕', w: 0.12, mult: 33 },
     { name: '蘑菇',   ch: '🍄', w: 0.10, mult: 45 },
     { name: '黄瓜',   ch: '🥒', w: 0.04, mult: 300 }
@@ -41,6 +41,7 @@
   var targets = [];         // 本局三列目标符号
   var stake = 0;
   var history = [];
+  var lastTick = 0;         // 卷轴咔哒声的节流
 
   /* ---------- 下注 ---------- */
 
@@ -108,9 +109,14 @@
 
   function randSym() { return SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]; }
 
+  /** 有图案图片的符号用 <img> 渲染，其余用 emoji 字符 */
+  function symbolHtml(s) {
+    return s.img ? '<img class="sym-img" src="' + s.img + '" alt="' + s.name + '">' : s.ch;
+  }
+
   /** 写一整列：syms 是 5 个符号，中间那格落在兑奖线上 */
   function setColumn(i, syms, stopped) {
-    for (var j = 0; j < ROWS; j++) cellEls[i][j].textContent = syms[j].ch;
+    for (var j = 0; j < ROWS; j++) cellEls[i][j].innerHTML = symbolHtml(syms[j]);
     reelEls[i].classList.toggle('is-stopped', !!stopped);
   }
 
@@ -136,6 +142,8 @@
     for (var i = 0; i < 3; i++) {
       if (i >= stoppedCount) spinColumn(i);
     }
+    var now = performance.now();
+    if (now - lastTick >= 55) { lastTick = now; Casino.sfx.tick(); }
     requestAnimationFrame(frame);
   }
 
@@ -162,18 +170,20 @@
     if (win) {
       Casino.payout(ret, net);
       banner.dataset.kind = 'win';
-      banner.innerHTML = '三列都是 <b>' + a.ch + ' ' + a.name + '</b>，' +
+      banner.innerHTML = '三列都是 <b>' + symbolHtml(a) + ' ' + a.name + '</b>，' +
         '赢得 <span class="banner__amount">' + net.toLocaleString('zh-CN') + '</span> 小黄瓜';
       if (a === CUCUMBER) {
         banner.innerHTML = '🎉 最终大奖！三根黄瓜排成一条线，赢了 <span class="banner__amount">' +
           net.toLocaleString('zh-CN') + '</span> 小黄瓜';
         Casino.toast('🎉 黄瓜三连 · 最终大奖！', 'win', 3200);
+        Casino.sfx.bigwin();
+      } else {
+        Casino.sfx.win();
       }
-      Casino.sfx.win();
     } else {
       Casino.record(-stake);
       banner.dataset.kind = 'lose';
-      banner.innerHTML = '三列是 ' + targets.map(function (s) { return s.ch; }).join(' ') +
+      banner.innerHTML = '三列是 ' + targets.map(symbolHtml).join(' ') +
         '，没成一条线，输掉 <span class="banner__amount">' + stake.toLocaleString('zh-CN') + '</span> 小黄瓜';
       Casino.sfx.lose();
     }
@@ -186,8 +196,8 @@
   }
 
   function pushLog(a, b, c, net) {
-    var icon = (a === b && b === c) ? a.ch : '·';
-    history.unshift({ icon: icon, line: a.ch + ' ' + b.ch + ' ' + c.ch, net: net });
+    var icon = (a === b && b === c) ? symbolHtml(a) : '·';
+    history.unshift({ icon: icon, line: symbolHtml(a) + ' ' + symbolHtml(b) + ' ' + symbolHtml(c), net: net });
     history = history.slice(0, 10);
     historyEl.innerHTML = history.map(function (h) {
       return '<span class="history__item' + (h.net > 0 ? ' is-win' : '') + '">' +
@@ -221,6 +231,16 @@
   }
 
   buildChips();
+
+  // 奖级表：由 SYMBOLS 生成（按倍率升序 = 概率降序），改赔率不用同步改页面
+  document.getElementById('prizeTable').innerHTML = SYMBOLS.slice()
+    .sort(function (a, b) { return a.mult - b.mult; })
+    .map(function (s) {
+      var tier = s.mult >= 100 ? 'high' : (s.mult >= 40 ? 'mid' : 'low');
+      return '<div class="slot-line" data-tier="' + tier + '"><span>' + symbolHtml(s) + ' ' + s.name +
+        ' ×' + s.mult + '</span><b>净赚 ' + (s.mult - 1) + ' 倍</b></div>';
+    }).join('');
+
   startBtn.addEventListener('click', start);
   stopBtn.addEventListener('click', stopOne);
   Casino.onChange(render);
