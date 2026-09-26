@@ -122,6 +122,7 @@
         var t = topics(code);
         publish(t.hub, { t: 'hb' }, 1, false);
         if (hbMeta) publish(t.pub, Object.assign({ t: 'hb' }, hbMeta), 0, true);
+        if (opts.onBeat) opts.onBeat();     // 房主顺带重广播当前状态，成员丢包 5s 内自愈
       }, HB_MS);
       // 立刻发一轮，别让大厅干等 5 秒
       var t0 = topics(code);

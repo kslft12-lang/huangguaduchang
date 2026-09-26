@@ -1232,6 +1232,7 @@ body::before {
   border: 1px solid rgba(164, 155, 140, .5); color: var(--cream-dim); vertical-align: 1px;
 }
 .tag--landlord { border-color: var(--brass); color: var(--brass-hi); background: rgba(232, 184, 75, .12); }
+.tag--off { border-color: var(--coral); color: var(--coral); }
 
 .ddz-center { text-align: center; display: grid; gap: 7px; justify-items: center; }
 .ddz-kitty { display: flex; gap: 5px; align-items: center; }
@@ -1257,7 +1258,7 @@ body::before {
   margin-top: 12px; display: flex; justify-content: center; flex-wrap: wrap;
   padding: 18px 6px 8px; min-height: 116px;
 }
-.ddz-hand .dcard { margin-left: -26px; transition: transform .12s ease-out; cursor: pointer; }
+.ddz-hand .dcard { margin-left: -20px; transition: transform .12s ease-out; cursor: pointer; }
 .ddz-hand .dcard:first-child { margin-left: 0; }
 .ddz-hand .dcard:hover { transform: translateY(-8px); }
 .ddz-hand .dcard--sel { transform: translateY(-16px); box-shadow: 0 0 0 2px var(--brass), 0 10px 18px -6px rgba(0, 0, 0, .8); }
@@ -1267,21 +1268,24 @@ body::before {
   background: linear-gradient(160deg, #fdf9ec, #ece2c8);
   border: 1px solid #b9a77e; box-shadow: 0 4px 10px -4px rgba(0, 0, 0, .7);
   color: #23201a; font-family: var(--sans);
-  display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+  display: inline-flex; flex-direction: column; align-items: flex-start;
   user-select: none;
 }
-.dcard b { font-size: 21px; font-weight: 800; line-height: 1; }
-.dcard i { font-style: normal; font-size: 15px; line-height: 1.15; }
+/* 点数花色放左上角（真实扑克角标）：手牌重叠时露出的一条永远能看到点数 */
+.dcard b { position: absolute; top: 4px; left: 6px; font-size: 18px; font-weight: 800; line-height: 1; }
+.dcard i { position: absolute; top: 25px; left: 7px; font-size: 13px; line-height: 1; font-style: normal; }
 .dcard--red { color: #c02b3f; }
 .dcard--sm { width: 34px; height: 48px; border-radius: 6px; }
-.dcard--sm b { font-size: 14px; }
-.dcard--sm i { font-size: 11px; }
+.dcard--sm b { font-size: 13px; top: 3px; left: 4px; }
+.dcard--sm i { font-size: 10px; top: 18px; left: 5px; }
 .dcard--back {
   background: linear-gradient(160deg, #3a2a0c, #1d1506);
   border-color: var(--brass-dk); color: var(--brass); font-weight: 700;
 }
-.dcard--joker { width: auto; min-width: 44px; padding: 0 8px; }
-.dcard--joker b { font-size: 13px; writing-mode: horizontal-tb; }
+.dcard--back b, .dcard--back i { position: static; }
+.dcard--joker { width: auto; min-width: 44px; padding: 0 8px; justify-content: center; }
+.dcard--joker b, .dcard--joker i { position: static; }
+.dcard--joker i { margin-top: 2px; }
 
 .ddz-result {
   margin-top: 16px; padding: 20px 22px; border-radius: var(--radius);
@@ -1305,9 +1309,10 @@ body::before {
 @media (max-width: 720px) {
   .ddz-opp-row { grid-template-columns: 1fr 1fr; }
   .ddz-center { grid-column: 1 / -1; order: -1; }
-  .ddz-hand .dcard { margin-left: -34px; }
+  .ddz-hand .dcard { margin-left: -22px; }
   .dcard { width: 46px; height: 66px; }
-  .dcard b { font-size: 17px; }
+  .dcard b { font-size: 15px; }
+  .dcard i { font-size: 11px; top: 21px; }
   .ddz-hand { min-height: 96px; }
 }
 

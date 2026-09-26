@@ -69,7 +69,10 @@
       onLobby: renderRoomList,
       onHub: onHubMsg,
       onPrivate: onPrivateMsg,
-      onHost: onHostMsg
+      onHost: onHostMsg,
+      onBeat: function () {
+        if (isHost && room) pushState();   // 心跳时重广播，成员丢的快照 5s 内补上
+      }
     });
     return net;
   }
@@ -225,6 +228,8 @@
     } else if (msg.t === 'seatLost' && msg.pid === pid) {
       toast('你掉线太久，座位被移出了', 'lose', 3000);
       exitToLobby();
+    } else if (msg.t === 'seatHold' && msg.pid === pid) {
+      toast('连接中断，托管代打中——重连后自动恢复', 'push', 4000);
     }
   }
 
@@ -263,6 +268,13 @@
     if (msg.t === 'leave') return hostDropSeat(msg.pid, msg.name);
     if (msg.t === 'ping') {
       room.lastPing[msg.pid] = Date.now();
+      // 掉线的座位报活了：恢复在线并广播
+      for (var p = 0; p < room.seats.length; p++) {
+        if (room.seats[p].pid === msg.pid && room.seats[p].offline) {
+          room.seats[p].offline = false;
+          pushState();
+        }
+      }
       return;
     }
     if (msg.pid && msg.seq !== undefined) {
@@ -293,17 +305,18 @@
   }
 
   function hostAddSeat(msg) {
-    if (room.seats.length >= 3) { net.toPlayer(msg.pid, { t: 'full' }); return; }
-    if (room.game) { net.toPlayer(msg.pid, { t: 'busy' }); return; }
     for (var i = 0; i < room.seats.length; i++) {
       if (room.seats[i].pid === msg.pid) {
-        // 重复 join：welcome/快照可能在路上丢了，幂等重发，别让人卡在大厅
+        // 已在座（重连/重进/快照丢失）：幂等重发，别让人卡在旧界面
+        room.seats[i].offline = false;
         room.seq++;
         net.toPlayer(msg.pid, { t: 'welcome' });
         net.toPlayer(msg.pid, buildView(i));
         return;
       }
     }
+    if (room.seats.length >= 3) { net.toPlayer(msg.pid, { t: 'full' }); return; }
+    if (room.game) { net.toPlayer(msg.pid, { t: 'busy' }); return; }
     room.seats.push({ pid: msg.pid, name: String(msg.name || '玩家').slice(0, 8), joinedAt: Date.now() });
     room.lastPing[msg.pid] = Date.now();
     net.toPlayer(msg.pid, { t: 'welcome' });
@@ -312,31 +325,29 @@
     updateLobbyMeta();
   }
 
+  /** 离开/掉线：大厅阶段释放座位；对局中座位保留、自动托管代打，
+      玩家重连（同 pid 的 ping/join）后自动恢复——一人掉线不再毁掉整局 */
   function hostDropSeat(deadPid, name) {
     for (var i = 0; i < room.seats.length; i++) {
       if (room.seats[i].pid === deadPid) {
         var who = room.seats[i].name || name || '玩家';
+        if (room.game) {
+          if (room.seats[i].offline) return;
+          room.seats[i].offline = true;
+          net.broadcast({ t: 'seatHold', pid: deadPid });
+          toast(who + ' 掉线，由托管代打', 'push');
+          pushState();
+          return;
+        }
         room.seats.splice(i, 1);
         delete room.lastPing[deadPid];
         net.broadcast({ t: 'seatLost', pid: deadPid });   // 让掉线的幽灵端自己回大厅
-        if (room.game) {
-          net.broadcast({ t: 'roomClosed', reason: who + ' 离开，对局解散' });
-          closeRoomLocal(who + ' 离开，对局解散');
-        } else {
-          toast(who + ' 离开了房间', 'push');
-          pushState();
-          updateLobbyMeta();
-        }
+        toast(who + ' 离开了房间', 'push');
+        pushState();
+        updateLobbyMeta();
         return;
       }
     }
-  }
-
-  function closeRoomLocal(reason) {
-    toast(reason, 'lose', 3000);
-    clearTimeout(room.timer);
-    room.game = null;
-    exitToLobby();
   }
 
   /** 房主：应用动作 → 广播每人视角 */
@@ -344,7 +355,12 @@
     var g = room.game;
     var res = R.applyAction(g, actorPid, action, Math.random);
     if (!res.ok) {
-      if (!auto) net.toPlayer(actorPid, { t: 'err', error: res.error });
+      if (!auto) {
+        net.toPlayer(actorPid, { t: 'err', error: res.error });
+        // 拒绝多半因为客户端视图过期：顺手把最新视角发回去纠正
+        room.seq++;
+        net.toPlayer(actorPid, buildView(R.seatOf(g, actorPid)));
+      }
       return;
     }
     pushState();
@@ -392,10 +408,11 @@
     base.firstBidder = g.firstBidder;
     base.deadline = room.deadline || 0;
     base.events = g.lastEvents || [];
-    base.seats = g.seats.map(function (s) {
+    base.seats = g.seats.map(function (s, si) {
       return {
         pid: s.pid, name: s.name, bid: s.bid, played: s.played,
         handCount: s.hand.length,
+        offline: !!(room.seats[si] && room.seats[si].offline),
         role: g.landlord >= 0 ? (s.seat === g.landlord ? 'landlord' : 'farmer') : null
       };
     });
@@ -443,6 +460,13 @@
     room.firstBidder = (room.firstBidder + 1) % 3;
     room.game = null;
     settledRound = -1;
+    // 一局打完，把掉线没回来的座位请出去（他们的端早就不在广播里了）
+    for (var i = room.seats.length - 1; i >= 0; i--) {
+      if (room.seats[i].offline && room.seats[i].pid !== pid) {
+        net.broadcast({ t: 'seatLost', pid: room.seats[i].pid });
+        room.seats.splice(i, 1);
+      }
+    }
     els.resultBox.hidden = true;
     pushState();
     updateLobbyMeta();
@@ -559,6 +583,7 @@
     el.innerHTML =
       '<div class="opp__name">' + esc(s.name) +
       (s.role === 'landlord' ? '<i class="tag tag--landlord">地主</i>' : (view.landlord >= 0 ? '<i class="tag">农民</i>' : '')) +
+      (s.offline ? '<i class="tag tag--off">离线·托管</i>' : '') +
       '</div>' +
       '<div class="opp__meta">' + tag + ' · ' + (view.phase === 'bid' ? (bidText || '思考中') : s.handCount + ' 张') +
       (isTurn ? ' <i class="dot dot--live"></i>' : '') + '</div>' +
@@ -622,12 +647,12 @@
     if (!playing && !bidding) selected = [];
   }
 
-  var lastEventKey = '';
+  var lastEventSig = '';
   function playEventSfx() {
     var evs = view.events || [];
-    var key = view.seq + ':' + evs.length;
-    if (key === lastEventKey) return;
-    lastEventKey = key;
+    var sig = view.seq + ':' + JSON.stringify(evs);
+    if (sig === lastEventSig) return;   // 心跳重广播带同样的事件，别重复响
+    lastEventSig = sig;
     evs.forEach(function (ev) {
       if (ev.t === 'play') Casino.sfx.tick();
       else if (ev.t === 'bomb') Casino.sfx.diceHit(8);
@@ -747,7 +772,7 @@
   window.__ddzDebug = function () {
     return {
       mode: mode, isHost: isHost,
-      room: room ? { code: room.code, seats: room.seats, phase: room.game ? room.game.phase : 'lobby', seq: room.seq } : null,
+      room: room ? { code: room.code, seats: room.seats, phase: room.game ? room.game.phase : 'lobby', seq: room.seq, round: room.round, hasGame: !!room.game } : null,
       view: view
     };
   };
