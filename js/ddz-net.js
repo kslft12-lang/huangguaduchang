@@ -267,5 +267,5 @@
     return api;
   }
 
-  global.DdzNet = { makeCode: makeCode, client: client, PREFIX: PREFIX };
+  global.DdzNet = { makeCode: makeCode, client: client, PREFIX: PREFIX, BROKERS: BROKERS };
 })(window);

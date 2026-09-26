@@ -8,8 +8,76 @@
   var KEY = 'casino.balance';
   var STAT_KEY = 'casino.stats';
   var SFX_KEY = 'casino.sfx';
+  var NAME_KEY = 'casino.name';
+  var UID_KEY = 'casino.uid';
   var START = 1000;
   var MIN_BET = 10;
+
+  /** 浏览器稳定身份（排行榜/昵称认领用；同浏览器所有页面共享） */
+  function getUid() {
+    try {
+      var u = localStorage.getItem(UID_KEY);
+      if (!u) {
+        u = Math.random().toString(16).slice(2, 10) + Math.random().toString(16).slice(2, 10);
+        localStorage.setItem(UID_KEY, u);
+      }
+      return u;
+    } catch (e) { return 'anon'; }
+  }
+
+  function getName() {
+    try { return localStorage.getItem(NAME_KEY) || ''; } catch (e) { return ''; }
+  }
+
+  function setName(n) {
+    try { localStorage.setItem(NAME_KEY, n); } catch (e) { /* ignore */ }
+    paint(false);
+  }
+
+  /** 昵称门槛：没设过昵称就弹全屏输入框，设好才放行（cb 收到昵称）。
+      reason 用于重名等场景的再次弹出；promptName 强制弹出（改名/占用） */
+  function requireName(reason, cb) {
+    var existing = getName();
+    if (existing) { cb(existing); return; }
+    showNameGate(reason || '', cb);
+  }
+
+  function promptName(reason, prefill, cb) {
+    showNameGate(reason || '', cb, prefill || '');
+  }
+
+  function showNameGate(reason, cb, prefill) {
+    var gate = document.getElementById('nameGate');
+    if (!gate) {
+      gate = document.createElement('div');
+      gate.id = 'nameGate';
+      gate.className = 'name-gate';
+      gate.innerHTML =
+        '<div class="name-gate__box">' +
+          '<h2 class="name-gate__title">🥒 进入黄瓜赌场 🥒</h2>' +
+          '<p class="name-gate__msg" id="nameGateMsg"></p>' +
+          '<input id="nameGateInput" class="name-gate__input" maxlength="12" placeholder="给自己起个昵称（1-12 字）" autocomplete="off">' +
+          '<button class="btn btn--lg" id="nameGateBtn" type="button">进场</button>' +
+        '</div>';
+      document.body.appendChild(gate);
+      var confirm = function () {
+        var input = document.getElementById('nameGateInput');
+        var n = (input.value || '').trim().slice(0, 12);
+        if (!n) { input.focus(); return; }
+        setName(n);
+        gate.remove();
+        cb(n);
+      };
+      document.getElementById('nameGateBtn').addEventListener('click', confirm);
+      document.getElementById('nameGateInput').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') confirm();
+      });
+    }
+    document.getElementById('nameGateMsg').textContent = reason;
+    var inp = document.getElementById('nameGateInput');
+    inp.value = prefill || '';
+    setTimeout(function () { inp.focus(); }, 50);
+  }
 
   function clampInt(n) {
     n = Math.floor(Number(n));
@@ -74,6 +142,7 @@
         '<div class="topbar__right">' +
           '<button class="btn btn--ghost btn--sm" id="sfxBtn" type="button" aria-pressed="false">音效 关</button>' +
           '<div class="balance-chip" id="balanceChip">' +
+            '<span class="balance-chip__name" id="balanceName"></span>' +
             '<span class="balance-chip__glyph"></span>' +
             '<span class="balance-chip__label">小黄瓜</span>' +
             '<span class="balance-chip__value" id="balanceValue">0</span>' +
@@ -116,6 +185,8 @@
 
   function paint(pulse) {
     if (balanceValueEl) balanceValueEl.textContent = balance.toLocaleString('zh-CN');
+    var nameEl = document.getElementById('balanceName');
+    if (nameEl) nameEl.textContent = getName() ? getName() + ' 的' : '';
     if (refillBtn) refillBtn.hidden = balance >= MIN_BET;
     if (pulse && balanceChipEl) {
       balanceChipEl.classList.remove('is-bump');
@@ -354,6 +425,17 @@
       else if (net < 0) write(balance + net, true);
       this.record(net, net === 0 ? 'push' : undefined);
     },
+
+    /** 管理员直接设定余额（替换而非增减） */
+    setBalance: function (n) {
+      write(clampInt(n), true);
+    },
+
+    getName: getName,
+    getUid: getUid,
+    setName: setName,
+    requireName: requireName,
+    promptName: promptName,
 
     /** 只记账不动余额（比如输掉已扣的本金）；余额没变但统计变了，同样要通知界面刷新 */
     record: function (net, kind) {
