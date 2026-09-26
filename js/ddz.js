@@ -10,7 +10,7 @@
 
   var R = window.DdzRules;
   var Net = window.DdzNet;
-  var ANTE = 100;                 // 基准注
+  var DEFAULT_BET = 100;          // 基准注（默认档）
   var BID_MS = 30000;             // 叫分限时
   var PLAY_MS = 60000;            // 出牌限时
   var JOIN_WAIT = 6000;           // 加入等待房主回应
@@ -29,13 +29,13 @@
   var $ = function (id) { return document.getElementById(id); };
   var els = {
     nameInput: $('nameInput'), netDot: $('netDot'), netText: $('netText'),
-    createPubBtn: $('createPubBtn'), createPrivBtn: $('createPrivBtn'),
+    betRow: $('betRow'), createPubBtn: $('createPubBtn'), createPrivBtn: $('createPrivBtn'),
     codeInput: $('codeInput'), joinBtn: $('joinBtn'), roomList: $('roomList'),
     lobbyPanel: $('lobbyPanel'), roomPanel: $('roomPanel'), tablePanel: $('tablePanel'),
     roomCode: $('roomCode'), roomKind: $('roomKind'), copyBtn: $('copyBtn'),
     leaveBtn: $('leaveBtn'), seatRow: $('seatRow'), roomHint: $('roomHint'), startBtn: $('startBtn'),
     oppLeft: $('oppLeft'), oppRight: $('oppRight'), kittyBox: $('kittyBox'), multBox: $('multBox'),
-    tableCards: $('tableCards'), tableNote: $('tableNote'),
+    tableCards: $('tableCards'), tableWho: $('tableWho'), tableNote: $('tableNote'),
     meInfo: $('meInfo'), bidBar: $('bidBar'), playBar: $('playBar'),
     playBtn: $('playBtn'), passBtn: $('passBtn'), myHand: $('myHand'),
     resultBox: $('resultBox')
@@ -50,6 +50,7 @@
   var view = null;           // 当前快照（房主本地构建 / 成员接收）
   var selected = [];
   var settledRound = -1;     // 已入账的局号
+  var settledDelta = null;   // 该局入账的小黄瓜数额（结算面板显示用）
   var joinTimer = null;
   var countdownTimer = null;
   var graceTimer = null;     // hostGone 宽限：等房主重连，别急着解散
@@ -57,6 +58,29 @@
   var pruneTimer = null;     // 房主清理久无音讯的座位
 
   function toast(msg, kind, ms) { Casino.toast(msg, kind, ms); }
+
+  /* ---------- 基准注 ---------- */
+
+  var betChoice = DEFAULT_BET;   // 建房面板选中的档位：100/200/500/1000 或 'dark50'
+
+  /** 基准注档位显示文本 */
+  function betText(b) {
+    return b === 'dark50' ? '黑暗 50%' : String(Number(b) || DEFAULT_BET);
+  }
+
+  /** 当前房间的基准注文本（优先用快照，建房瞬间快照还没回来就用本地选择） */
+  function currentBetText() {
+    if (view && view.baseBet !== undefined) return betText(view.baseBet);
+    if (room && room.bet !== undefined) return betText(room.bet);
+    return betText(DEFAULT_BET);
+  }
+
+  /** 我的本局基准注（小黄瓜）：黑暗局 = 结算时自己余额的 50%，其余为固定档位 */
+  function myBet() {
+    if (!view || view.baseBet === undefined) return DEFAULT_BET;
+    if (view.baseBet === 'dark50') return Math.floor(Casino.getBalance() / 2);
+    return Number(view.baseBet) || DEFAULT_BET;
+  }
 
   /* ---------- 联机层 ---------- */
 
@@ -100,7 +124,7 @@
       var full = r.n >= 3;
       return '<div class="room-row">' +
         '<b>' + r.code + '</b>' +
-        '<span>' + esc(r.host) + ' 的房 · ' + r.n + '/3 人</span>' +
+        '<span>' + esc(r.host) + ' 的房 · ' + r.n + '/3 人' + (r.bet ? ' · 底 ' + betText(r.bet) : '') + '</span>' +
         (full ? '<em>满员</em>' : '<button class="btn btn--sm" data-join="' + r.code + '" type="button">加入</button>') +
         '</div>';
     }).join('');
@@ -137,7 +161,7 @@
     isHost = true;
     var code = Net.makeCode();
     room = {
-      code: code, isPublic: isPublic,
+      code: code, isPublic: isPublic, bet: betChoice,
       seats: [{ pid: pid, name: myName }],
       game: null, seq: 0, round: 0, firstBidder: 0,
       lastSeq: {}, lastPing: {}, timer: null, deadline: 0
@@ -179,6 +203,7 @@
     view = null;
     selected = [];
     settledRound = -1;
+    settledDelta = null;
     els.lobbyPanel.hidden = false;
     els.roomPanel.hidden = true;
     els.tablePanel.hidden = true;
@@ -252,11 +277,16 @@
     if (!view || !view.result || view.phase !== 'over') return;
     if (settledRound === view.round) return;
     settledRound = view.round;
-    var netScore = view.result.scores[view.mySeat] || 0;
-    Casino.addWager(ANTE);
-    Casino.applyNet(netScore);
-    if (netScore > 0) { toast('+' + netScore + ' 小黄瓜', 'win'); Casino.sfx.win(); }
-    else if (netScore < 0) { toast(netScore + ' 小黄瓜', 'lose'); Casino.sfx.lose(); }
+    var netScore = view.result.scores[view.mySeat] || 0;   // 游戏分：叫分×炸弹×春天，地主双倍
+    var bet = myBet();
+    var delta = netScore * bet;                            // 1 游戏分 = 1 基准注
+    var bal = Casino.getBalance();
+    if (delta < -bal) delta = -bal;                        // 输光为止，余额地板 0
+    settledDelta = delta;
+    Casino.addWager(bet);
+    Casino.applyNet(delta);
+    if (delta > 0) { toast('+' + delta + ' 小黄瓜', 'win'); Casino.sfx.win(); }
+    else if (delta < 0) { toast(delta + ' 小黄瓜', 'lose'); Casino.sfx.lose(); }
     else { toast('平局', 'push'); Casino.sfx.click(); }
   }
 
@@ -402,6 +432,7 @@
     var base = {
       t: 'view', seq: room.seq, round: room.round, code: room.code,
       mySeat: seatIdx, turn: -1, landlord: -1, highestBid: 0,
+      baseBet: room.bet,
       bombs: 0, deadline: room.deadline || 0,
       seats: room.seats.map(function (s) { return { pid: s.pid, name: s.name, bid: -1 }; }),
       events: []
@@ -458,6 +489,7 @@
     room.game = R.createGame(room.seats, Math.random, room.firstBidder);
     room.lastSeq = {};
     settledRound = -1;
+    settledDelta = null;
     net.setLobbyMeta(null);      // 开局后从大厅隐身
     els.resultBox.hidden = true;
     pushState();
@@ -471,6 +503,7 @@
     room.firstBidder = (room.firstBidder + 1) % 3;
     room.game = null;
     settledRound = -1;
+    settledDelta = null;
     // 一局打完，把掉线没回来的座位请出去（他们的端早就不在广播里了）
     for (var i = room.seats.length - 1; i >= 0; i--) {
       if (room.seats[i].offline && room.seats[i].pid !== pid) {
@@ -486,7 +519,7 @@
   function updateLobbyMeta() {
     if (!isHost || !room) return;
     if (room.isPublic && !room.game) {
-      net.setLobbyMeta({ host: myName, n: room.seats.length, phase: 'lobby' });
+      net.setLobbyMeta({ host: myName, n: room.seats.length, phase: 'lobby', bet: room.bet });
     } else {
       net.setLobbyMeta(null);
     }
@@ -519,6 +552,9 @@
     }
     var r = view.result;
     var meNet = r.scores[view.mySeat] || 0;
+    var meDelta = settledRound === view.round && settledDelta !== null
+      ? settledDelta
+      : meNet * myBet();
     var lines = view.seats.map(function (s, i) {
       var sc = r.scores[i] || 0;
       return '<div class="ddz-scoreline' + (s.pid === pid ? ' is-me' : '') + '">' +
@@ -532,7 +568,8 @@
       (r.spring ? ' · ' + (r.landlordWon ? '春天' : '反春') + ' ×2' : '') + '</div>' +
       lines +
       '<p class="ddz-result__note">底分 ' + r.base + (view.bombs ? ' · 炸弹 ×' + Math.pow(2, Math.min(view.bombs, R.MAX_BOMB_POW)) : '') +
-      ' · 每局基准注 ' + ANTE + '，结果已计入你的小黄瓜。</p>' +
+      ' · 基准注 ' + currentBetText() + (view.baseBet === 'dark50' ? '（结算时余额一半）' : '') +
+      '，你 ' + (meDelta > 0 ? '+' : '') + meDelta + ' 小黄瓜已入账。</p>' +
       (isHost ? '<button class="btn btn--lg" data-action="next" type="button">再来一局</button>'
               : '<p class="ddz-result__wait">等待房主开下一局…</p>');
     els.resultBox.hidden = false;
@@ -557,12 +594,13 @@
         '</div>';
     }).join('');
     var need = 3 - seats.length;
+    var betPrefix = '基准注 ' + currentBetText() + ' · ';
     if (isHost) {
       els.startBtn.hidden = need > 0;
-      els.roomHint.textContent = need > 0 ? '还差 ' + need + ' 人，把房号发给朋友（公开房会出现在大厅列表）。' : '人齐了，开局！';
+      els.roomHint.textContent = betPrefix + (need > 0 ? '还差 ' + need + ' 人，把房号发给朋友（公开房会出现在大厅列表）。' : '人齐了，开局！');
     } else {
       els.startBtn.hidden = true;
-      els.roomHint.textContent = need > 0 ? '等待房主凑齐 ' + 3 + ' 人开局…' : '等待房主开局…';
+      els.roomHint.textContent = betPrefix + (need > 0 ? '等待房主凑齐 ' + 3 + ' 人开局…' : '等待房主开局…');
     }
   }
 
@@ -612,7 +650,7 @@
   }
 
   function renderMult() {
-    var bits = ['基准注 ' + ANTE];
+    var bits = ['基准注 ' + currentBetText()];
     if (view.highestBid > 0) bits.push('叫分 ' + view.highestBid);
     if (view.bombs > 0) bits.push('炸弹 ×' + Math.pow(2, Math.min(view.bombs, R.MAX_BOMB_POW)));
     els.multBox.textContent = bits.join(' · ');
@@ -621,6 +659,7 @@
   function renderFelt() {
     var t = view.table;
     els.tableCards.innerHTML = t ? t.cards.map(function (c) { return cardHtml(c, false); }).join('') : '';
+    els.tableWho.innerHTML = t ? '刚出 · <b>' + esc(seatAt(t.seat).name) + '</b>' : '';
     var note = '';
     if (view.phase === 'bid') {
       note = '叫分中（' + countBids() + '/3）';
@@ -763,6 +802,17 @@
     els.nameInput.value = n;
   });
 
+  els.betRow.addEventListener('click', function (e) {
+    var btn = e.target.closest ? e.target.closest('[data-bet]') : null;
+    if (!btn) return;
+    var v = btn.getAttribute('data-bet');
+    betChoice = v === 'dark50' ? 'dark50' : (Number(v) || DEFAULT_BET);
+    Array.prototype.forEach.call(els.betRow.querySelectorAll('[data-bet]'), function (b) {
+      b.className = 'btn btn--sm' + (b === btn ? '' : ' btn--ghost');
+    });
+    Casino.sfx.click();
+  });
+
   els.createPubBtn.addEventListener('click', function () { createRoom(true); });
   els.createPrivBtn.addEventListener('click', function () { createRoom(false); });
   els.joinBtn.addEventListener('click', function () { joinRoom(els.codeInput.value); });
@@ -806,4 +856,6 @@
       view: view
     };
   };
+  // 调试：手动塞一个快照并渲染（视觉/渲染调试用，正常流程不经过这里）
+  window.__ddzDebugSetView = function (v) { view = v; render(); };
 })();

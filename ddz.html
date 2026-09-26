@@ -14,8 +14,9 @@
 
   <div class="page-head">
     <h1>斗地主</h1>
-    <p>三人联机斗地主。进公开房凑人，或创建私密房把房间码发给朋友。每局基准注 100 小黄瓜，
-    地主输赢双倍，炸弹每个翻倍（最多 ×8），春天再翻倍——结算由各人本机入账。</p>
+    <p>三人联机斗地主。进公开房凑人，或创建私密房把房间码发给朋友。基准注由房主建房时选定
+    （100 / 200 / 500 / 1000 / 黑暗 50% 余额），1 游戏分 = 1 基准注，地主输赢双倍，
+    炸弹每个翻倍（最多 ×8），春天再翻倍——结算由各人本机入账。</p>
   </div>
 
   <section class="panel" id="lobbyPanel">
@@ -26,6 +27,14 @@
           <input id="nameInput" maxlength="8" placeholder="玩家" autocomplete="off">
         </label>
         <span class="ddz-status"><i class="dot" id="netDot"></i><span id="netText">未连接</span></span>
+      </div>
+      <div class="ddz-create" id="betRow" role="group" aria-label="基准注">
+        <span class="ddz-betlabel">基准注</span>
+        <button class="btn btn--sm" data-bet="100" type="button">100</button>
+        <button class="btn btn--sm btn--ghost" data-bet="200" type="button">200</button>
+        <button class="btn btn--sm btn--ghost" data-bet="500" type="button">500</button>
+        <button class="btn btn--sm btn--ghost" data-bet="1000" type="button">1000</button>
+        <button class="btn btn--sm btn--ghost" data-bet="dark50" type="button" title="黑暗局：基准注 = 结算时你当前小黄瓜余额的 50%，输赢上不封顶">黑暗 50%</button>
       </div>
       <div class="ddz-create">
         <button class="btn" id="createPubBtn" type="button">创建公开房</button>
@@ -65,6 +74,7 @@
       <div class="opp" id="oppRight"></div>
     </div>
     <div class="ddz-felt">
+      <div class="ddz-playedby" id="tableWho"></div>
       <div class="ddz-played" id="tableCards"></div>
       <div class="ddz-note" id="tableNote"></div>
     </div>

@@ -155,7 +155,7 @@
           var hb = null;
           try { hb = JSON.parse(text); } catch (e) { return; }
           if (hb && hb.t === 'hb') {
-            rooms[rc] = { code: rc, host: hb.host, n: hb.n, phase: hb.phase, seen: Date.now() };
+            rooms[rc] = { code: rc, host: hb.host, n: hb.n, phase: hb.phase, bet: hb.bet, seen: Date.now() };
           }
         }
         scheduleLobbyFlush();
@@ -188,7 +188,7 @@
             // 不然每个新订阅者都会永远看到这个僵尸房（活房 5s 内会重发，误清能自愈）
             publish(PREFIX + '/pub/' + k, null, 0, true);
           } else {
-            list.push({ code: rooms[k].code, host: rooms[k].host, n: rooms[k].n, phase: rooms[k].phase });
+            list.push({ code: rooms[k].code, host: rooms[k].host, n: rooms[k].n, phase: rooms[k].phase, bet: rooms[k].bet });
           }
         }
         list.sort(function (a, b) { return a.code < b.code ? -1 : 1; });
