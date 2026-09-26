@@ -100,6 +100,31 @@
     </a>
   </div>
 
+  <div class="home-grid">
+    <section class="panel" id="lbPanel">
+      <h2 class="panel__title">小黄瓜排行榜</h2>
+      <div class="ddz-lb" id="lbList"><p class="room-empty">正在读取玩家数据…</p></div>
+      <p class="ddz-privnote">余额绑定昵称，全服玩家实时排名；点顶栏昵称可改名。</p>
+    </section>
+
+    <section class="panel" id="adminPanel">
+      <h2 class="panel__title">管理员面板</h2>
+      <div class="ddz-admin">
+        <div class="ddz-admin__gate" id="adminGate">
+          <p class="ddz-privnote">输入管理口令解锁（可修改所有玩家余额）。</p>
+          <div class="ddz-join">
+            <input id="adminKeyInput" type="password" class="ddz-code-input" placeholder="管理口令" autocomplete="off">
+            <button class="btn" id="adminKeyBtn" type="button">解锁</button>
+          </div>
+        </div>
+        <div id="adminBody" hidden>
+          <p class="ddz-privnote">直接改写玩家余额并同步到其浏览器；离线玩家下次上线自动采纳。</p>
+          <div class="ddz-admin__rows" id="adminRows"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
   <section class="panel" style="margin-top:26px">
     <h2 class="panel__title">规则速查</h2>
     <ul class="rules">
@@ -125,7 +150,9 @@
 
 </main>
 
+<script src="js/lib/mqtt.min.js"></script>
 <script src="js/common.js"></script>
+<script src="js/home.js"></script>
 <script>
 (function () {
   'use strict';

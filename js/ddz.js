@@ -38,9 +38,7 @@
     tableCards: $('tableCards'), tableNote: $('tableNote'),
     meInfo: $('meInfo'), bidBar: $('bidBar'), playBar: $('playBar'),
     playBtn: $('playBtn'), passBtn: $('passBtn'), myHand: $('myHand'),
-    resultBox: $('resultBox'),
-    lbList: $('lbList'), adminGate: $('adminGate'), adminBody: $('adminBody'),
-    adminRows: $('adminRows'), adminKeyInput: $('adminKeyInput'), adminKeyBtn: $('adminKeyBtn')
+    resultBox: $('resultBox')
   };
 
   /* ---------- 会话状态 ---------- */
@@ -494,190 +492,6 @@
     }
   }
 
-  /* ---------- 玩家注册表 / 排行榜 / 管理员 ----------
-     没有后端：所有玩家的「昵称 → 余额」走公共 MQTT 的 retained 条目
-     （hgdd1/u/<昵称>）。昵称唯一性 = 条目被某个浏览器 uid 认领，别人抢同
-     名会被强制改名；rev 是单调版本号，管理员/别的设备写更高 rev 时本地
-     自动采纳，避免心跳互相覆盖。管理员面板用共享口令解锁（玩具级：口令
-     在源码里可见），改余额 = 发布新 retained 条目 + 点对点命令。 */
-
-  var ADMIN_KEY = 'huanggua666';
-  var reg = { conn: null, users: {}, myRev: 0, hbTimer: null, chgPending: false };
-
-  function uTopic(name) { return Net.PREFIX + '/u/' + encodeURIComponent(name); }
-  function adminTopic(name) { return Net.PREFIX + '/adminset/' + encodeURIComponent(name); }
-
-  function regPublish(topic, obj, retain) {
-    if (!reg.conn) return;
-    try {
-      reg.conn.publish(topic, obj === null ? '' : JSON.stringify(obj), { qos: retain ? 1 : 1, retain: !!retain });
-    } catch (e) { /* ignore */ }
-  }
-
-  /** 发布/刷新自己的条目。若发现别人（管理员或另一台设备）写了更高 rev 的
-      自己条目，先采纳其余额再认领，避免心跳把管理员的修改冲掉 */
-  function publishEntry() {
-    var mine = reg.users[myName];
-    if (mine && mine.uid !== Casino.getUid() && (mine.rev | 0) > reg.myRev) {
-      reg.myRev = mine.rev | 0;
-      Casino.setBalance(mine.balance);
-    }
-    var entry = { t: 'u', name: myName, balance: Casino.getBalance(), ts: Date.now(), rev: reg.myRev, uid: Casino.getUid() };
-    reg.users[myName] = entry;
-    regPublish(uTopic(myName), entry, true);
-    renderLeaderboard();
-    renderAdminRows();
-  }
-
-  function maybeAdopt(e) {
-    if (e.name !== myName || e.uid === Casino.getUid()) return;
-    if ((e.rev | 0) > reg.myRev) {
-      reg.myRev = e.rev | 0;
-      if ((e.balance | 0) !== Casino.getBalance()) {
-        Casino.setBalance(e.balance);
-        toast('余额被同步为 ' + e.balance + ' 小黄瓜', 'push');
-      }
-    }
-  }
-
-  /** 昵称认领检查：条目被别的浏览器 uid 占着 → 强制改名 */
-  function checkClaim() {
-    var mine = reg.users[myName];
-    if (!mine || mine.uid === Casino.getUid()) return;
-    Casino.promptName('昵称「' + myName + '」已被占用，换一个：', myName, function (newName) {
-      if (newName === myName) { checkClaim(); return; }
-      regPublish(uTopic(myName), null, true);   // 注销旧条目
-      myName = newName;
-      reg.myRev = 0;
-      reg.conn.subscribe(adminTopic(myName), { qos: 1 });
-      els.nameInput.value = myName;
-      publishEntry();
-      setTimeout(checkClaim, 1500);
-    });
-  }
-
-  function regStart() {
-    var idx = 0;
-    function tryConnect() {
-      var c = window.mqtt.connect(Net.BROKERS[idx], {
-        clientId: Net.PREFIX + '-u-' + Casino.getUid() + '-' + Math.random().toString(16).slice(2, 6),
-        keepalive: 60, clean: true, reconnectPeriod: 5000, connectTimeout: 8000, protocolVersion: 4
-      });
-      reg.conn = c;
-      c.on('connect', function () {
-        c.subscribe(Net.PREFIX + '/u/+', { qos: 0 });
-        c.subscribe(adminTopic(myName), { qos: 1 });
-        publishEntry();
-        setTimeout(checkClaim, 1500);
-      });
-      c.on('message', function (topic, payload) {
-        var text = payload ? payload.toString() : '';
-        if (topic.indexOf(Net.PREFIX + '/u/') === 0) {
-          var name = decodeURIComponent(topic.slice(Net.PREFIX.length + 3));
-          if (!text) {
-            delete reg.users[name];
-          } else {
-            var e = null;
-            try { e = JSON.parse(text); } catch (err) { /* ignore */ }
-            if (e && e.name) { reg.users[e.name] = e; maybeAdopt(e); }
-          }
-          renderLeaderboard();
-          renderAdminRows();
-          return;
-        }
-        if (topic === adminTopic(myName)) {
-          var cmd = null;
-          try { cmd = JSON.parse(text); } catch (err) { /* ignore */ }
-          if (cmd && cmd.t === 'set' && cmd.key === ADMIN_KEY) {
-            Casino.setBalance(cmd.balance);
-            toast('管理员把你的余额调整为 ' + cmd.balance + ' 小黄瓜', 'push', 4000);
-          }
-        }
-      });
-      c.on('error', function () {
-        if (idx < Net.BROKERS.length - 1) { idx++; c.end(true); tryConnect(); }
-      });
-    }
-    tryConnect();
-    reg.hbTimer = setInterval(publishEntry, 10000);   // 心跳：在线标记 + 余额刷新
-    Casino.onChange(function () {
-      if (!reg.conn || reg.chgPending) return;
-      reg.chgPending = true;
-      setTimeout(function () { reg.chgPending = false; reg.myRev++; publishEntry(); }, 800);
-    });
-  }
-
-  function renderLeaderboard() {
-    var rows = Object.keys(reg.users).map(function (n) { return reg.users[n]; })
-      .sort(function (a, b) { return (b.balance | 0) - (a.balance | 0); })
-      .slice(0, 30);
-    if (!rows.length) { els.lbList.innerHTML = '<p class="room-empty">还没有玩家数据</p>'; return; }
-    els.lbList.innerHTML = rows.map(function (e, i) {
-      var online = Date.now() - (e.ts | 0) < 60000;
-      var me = e.name === myName;
-      return '<div class="lb-row' + (me ? ' is-me' : '') + '">' +
-        '<b class="lb-rank">' + (i + 1) + '</b>' +
-        '<span class="lb-name">' + esc(e.name) + (me ? '（我）' : '') + '</span>' +
-        '<i class="dot' + (online ? ' is-ok' : '') + '"></i>' +
-        '<b class="lb-balance">' + (e.balance | 0).toLocaleString('zh-CN') + '</b></div>';
-    }).join('');
-  }
-
-  function adminUnlocked() {
-    try { return sessionStorage.getItem('ddzAdmin') === '1'; } catch (e) { return false; }
-  }
-
-  function renderAdminRows() {
-    if (!adminUnlocked()) { els.adminGate.hidden = false; els.adminBody.hidden = true; return; }
-    els.adminGate.hidden = true;
-    els.adminBody.hidden = false;
-    var rows = Object.keys(reg.users).map(function (n) { return reg.users[n]; })
-      .sort(function (a, b) { return (b.balance | 0) - (a.balance | 0); });
-    els.adminRows.innerHTML = rows.map(function (e) {
-      var online = Date.now() - (e.ts | 0) < 60000;
-      return '<div class="lb-row">' +
-        '<span class="lb-name">' + esc(e.name) + (online ? '' : '（离线）') + '</span>' +
-        '<input class="ddz-code-input admin-amt" data-name="' + esc(e.name) + '" value="' + (e.balance | 0) + '" inputmode="numeric">' +
-        '<button class="btn btn--sm" data-admin="' + esc(e.name) + '" type="button">设置</button></div>';
-    }).join('') || '<p class="room-empty">还没有玩家数据</p>';
-  }
-
-  els.adminKeyBtn.addEventListener('click', function () {
-    if (els.adminKeyInput.value === ADMIN_KEY) {
-      try { sessionStorage.setItem('ddzAdmin', '1'); } catch (e) { /* ignore */ }
-      toast('管理员面板已解锁', 'win');
-      renderAdminRows();
-    } else {
-      toast('口令不对', 'lose');
-    }
-  });
-
-  els.adminRows.addEventListener('click', function (e) {
-    var btn = e.target.closest ? e.target.closest('[data-admin]') : null;
-    if (!btn) return;
-    var name = btn.getAttribute('data-admin');
-    var input = els.adminRows.querySelector('.admin-amt[data-name="' + name.replace(/"/g, '\\"') + '"]');
-    var v = Math.max(0, Math.round(Number(input && input.value) || 0));
-    var cur = reg.users[name] || { rev: 0 };
-    var entry = { t: 'u', name: name, balance: v, ts: Date.now(), rev: (cur.rev | 0) + 1, uid: 'admin' };
-    regPublish(uTopic(name), entry, true);                       // retained：排行榜立刻更新
-    regPublish(adminTopic(name), { t: 'set', balance: v, key: ADMIN_KEY }, false);  // 在线玩家即时采纳
-    toast('已把 ' + name + ' 的余额设为 ' + v, 'win');
-  });
-
-  /** 改名：注销旧条目 → 认领新名字 → 认领校验 */
-  function renameTo(newName) {
-    if (newName === myName) return;
-    regPublish(uTopic(myName), null, true);
-    myName = newName;
-    Casino.setName(newName);          // 全站昵称同步（顶栏 + localStorage）
-    reg.myRev = 0;
-    if (reg.conn) reg.conn.subscribe(adminTopic(myName), { qos: 1 });
-    els.nameInput.value = myName;
-    publishEntry();
-    setTimeout(checkClaim, 1500);
-  }
-
   /* ---------- 渲染 ---------- */
 
   function esc(s) {
@@ -941,7 +755,12 @@
   els.nameInput.addEventListener('change', function () {
     var n = els.nameInput.value.trim().slice(0, 12);
     if (!n || n === myName) { els.nameInput.value = myName; return; }
-    renameTo(n);
+    Casino.setName(n);   // 注册表自动迁移条目；重名会被强制改名
+  });
+
+  Casino.onName(function (n) {
+    myName = n;
+    els.nameInput.value = n;
   });
 
   els.createPubBtn.addEventListener('click', function () { createRoom(true); });
@@ -970,11 +789,11 @@
   });
 
   paintStatus('connecting');
-  // 昵称门槛：设好昵称才启动联机（重名会在注册表认领时被强制改名）
+  // 昵称门槛在 common.js 的 mountHeader 里弹出（全站）；注册表也在那里启动。
+  // 这里只等昵称就绪后启动牌桌联机。
   Casino.requireName('', function (name) {
     myName = name;
     els.nameInput.value = myName;
-    regStart();
     ensureNet();
     net.browse(true);
   });

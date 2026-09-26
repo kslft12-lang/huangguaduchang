@@ -32,6 +32,8 @@
   function setName(n) {
     try { localStorage.setItem(NAME_KEY, n); } catch (e) { /* ignore */ }
     paint(false);
+    notifyName(n);
+    if (reg.started) publishEntry();   // 注册表检测改名并迁移条目
   }
 
   /** 昵称门槛：没设过昵称就弹全屏输入框，设好才放行（cb 收到昵称）。
@@ -108,7 +110,139 @@
   var stats = readStats();
   var subscribers = [];
 
-  /* ---------- 顶栏 ---------- */
+  /* ---------- 玩家注册表 / 排行榜数据源 / 管理员 ----------
+     没有后端：「昵称 → 余额」以 retained 条目发布在 hgdd1/u/<昵称>，所有人
+     聚合即得排行榜。昵称唯一性 = 条目被某个浏览器 uid 认领，抢同名会被强制
+     改名；rev 单调版本号防止心跳覆盖管理员/其他设备的修改。管理员用共享口令
+     （玩具级：口令在源码可见）发布新条目 + 点对点命令，在线玩家即时采纳。
+     依赖 window.mqtt（页面需引入 js/lib/mqtt.min.js），未引入的页面自动跳过。 */
+
+  var BROKERS = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt'];
+  var ADMIN_KEY = 'huanggua666';
+  var reg = { conn: null, users: {}, myRev: 0, started: false, claimed: null, hbTimer: null, chgPending: false };
+  var regSubs = [];
+  var nameSubs = [];
+
+  function uTopic(n) { return 'hgdd1/u/' + encodeURIComponent(n); }
+  function adminTopic(n) { return 'hgdd1/adminset/' + encodeURIComponent(n); }
+
+  function notifyRegistry() {
+    var snapshot = {};
+    for (var k in reg.users) snapshot[k] = reg.users[k];
+    regSubs.forEach(function (fn) { try { fn(snapshot); } catch (e) { /* ignore */ } });
+  }
+
+  function notifyName(n) {
+    nameSubs.forEach(function (fn) { try { fn(n); } catch (e) { /* ignore */ } });
+  }
+
+  /** 发布/刷新自己的条目；发现更高 rev 的自己条目（管理员/另一台设备）先采纳 */
+  function publishEntry() {
+    var n = getName();
+    if (n !== reg.claimed && reg.claimed !== null) {
+      pubTo(uTopic(reg.claimed), null, true);   // 改名：注销旧条目
+    }
+    var mine = reg.users[n];
+    if (mine && mine.uid !== getUid() && (mine.rev | 0) > reg.myRev) {
+      reg.myRev = mine.rev | 0;
+      if ((mine.balance | 0) !== balance) write(mine.balance, true);
+    }
+    reg.claimed = n;
+    var entry = { t: 'u', name: n, balance: balance, ts: Date.now(), rev: reg.myRev, uid: getUid() };
+    reg.users[n] = entry;
+    pubTo(uTopic(n), entry, true);
+    notifyRegistry();
+  }
+
+  function pubTo(topic, obj, retain) {
+    if (!reg.conn) return;
+    try {
+      reg.conn.publish(topic, obj === null ? '' : JSON.stringify(obj), { qos: 1, retain: !!retain });
+    } catch (e) { /* ignore */ }
+  }
+
+  function startRegistry() {
+    if (reg.started) return;
+    reg.started = true;
+    var tries = 0;
+    var boot = function () {
+      if (typeof global.mqtt === 'undefined') {
+        if (++tries > 20) return;   // 页面没引 mqtt.min.js：无注册表，昵称门槛照常
+        setTimeout(boot, 300); return;
+      }
+      var idx = 0;
+      var tryConnect = function () {
+        var c = global.mqtt.connect(BROKERS[idx], {
+          clientId: 'hgdd1-u-' + getUid() + '-' + Math.random().toString(16).slice(2, 6),
+          keepalive: 60, clean: true, reconnectPeriod: 5000, connectTimeout: 8000, protocolVersion: 4
+        });
+        reg.conn = c;
+        c.on('connect', function () {
+          c.subscribe('hgdd1/u/+', { qos: 0 });
+          c.subscribe(adminTopic(getName()), { qos: 1 });
+          publishEntry();
+          setTimeout(checkClaim, 1800);
+        });
+        c.on('message', function (topic, payload) {
+          var text = payload ? payload.toString() : '';
+          if (topic.indexOf('hgdd1/u/') === 0) {
+            var name = decodeURIComponent(topic.slice(8));
+            if (!text) { delete reg.users[name]; }
+            else {
+              var e = null;
+              try { e = JSON.parse(text); } catch (err) { /* ignore */ }
+              if (e && e.name) { reg.users[e.name] = e; adopt(e); }
+            }
+            notifyRegistry();
+            return;
+          }
+          if (topic === adminTopic(getName())) {
+            var cmd = null;
+            try { cmd = JSON.parse(text); } catch (err) { /* ignore */ }
+            if (cmd && cmd.t === 'set' && cmd.key === ADMIN_KEY) {
+              write(clampInt(cmd.balance), true);
+              toast('管理员把你的余额调整为 ' + cmd.balance + ' 小黄瓜', 'push', 4000);
+            }
+          }
+        });
+        c.on('error', function () {
+          if (idx < BROKERS.length - 1) { idx++; c.end(true); tryConnect(); }
+        });
+      };
+      tryConnect();
+      reg.hbTimer = setInterval(publishEntry, 10000);
+    };
+    boot();
+  }
+
+  function adopt(e) {
+    if (e.name !== getName() || e.uid === getUid()) return;
+    if ((e.rev | 0) > reg.myRev) {
+      reg.myRev = e.rev | 0;
+      if ((e.balance | 0) !== balance) {
+        write(clampInt(e.balance), true);
+        toast('余额被同步为 ' + e.balance + ' 小黄瓜', 'push');
+      }
+    }
+  }
+
+  /** 昵称认领：条目被别的浏览器 uid 占着 → 强制改名 */
+  function checkClaim() {
+    var mine = reg.users[getName()];
+    if (!mine || mine.uid === getUid()) return;
+    promptName('昵称「' + getName() + '」已被占用，换一个：', getName(), function (n) {
+      if (!n || n === getName()) { checkClaim(); return; }
+      setName(n);
+    });
+  }
+
+  function onRegistry(fn) { if (typeof fn === 'function') regSubs.push(fn); }
+  function onName(fn) { if (typeof fn === 'function') nameSubs.push(fn); }
+  function registryUsers() {
+    var snapshot = {};
+    for (var k in reg.users) snapshot[k] = reg.users[k];
+    return snapshot;
+  }
 
   var NAV = [
     ['index', '主页', 'index.html'],
@@ -174,6 +308,19 @@
 
     syncSfxButton();
     paint(false);
+    // 昵称门槛 + 注册表启动（排行榜/管理员的数据源，见下方注册表段）
+    requireName('', function (n) {
+      notifyName(n);
+      startRegistry();
+    });
+    var nameEl = document.getElementById('balanceName');
+    if (nameEl) {
+      nameEl.style.cursor = 'pointer';
+      nameEl.title = '点击改昵称';
+      nameEl.addEventListener('click', function () {
+        promptName('换个昵称（旧昵称会注销，余额跟人走）：', getName(), function (n) { setName(n); });
+      });
+    }
   }
 
   function syncSfxButton() {
@@ -436,6 +583,17 @@
     setName: setName,
     requireName: requireName,
     promptName: promptName,
+    onName: onName,
+    registryUsers: registryUsers,
+    onRegistry: onRegistry,
+    /** 管理员改余额：retained 条目（榜单即时更新）+ 点对点命令（在线玩家即时采纳） */
+    adminPublish: function (name, entry, v) {
+      if (!reg.conn) { toast('注册表未连接', 'lose'); return; }
+      pubTo(uTopic(name), entry, true);
+      pubTo(adminTopic(name), { t: 'set', balance: v, key: ADMIN_KEY }, false);
+    },
+    BROKERS: BROKERS,
+    ADMIN_KEY: ADMIN_KEY,
 
     /** 只记账不动余额（比如输掉已扣的本金）；余额没变但统计变了，同样要通知界面刷新 */
     record: function (net, kind) {
