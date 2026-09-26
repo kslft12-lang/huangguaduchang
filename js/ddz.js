@@ -356,10 +356,17 @@
     var res = R.applyAction(g, actorPid, action, Math.random);
     if (!res.ok) {
       if (!auto) {
-        net.toPlayer(actorPid, { t: 'err', error: res.error });
-        // 拒绝多半因为客户端视图过期：顺手把最新视角发回去纠正
+        // 拒绝多半因为客户端视图过期：连错误带最新视角一起纠正
         room.seq++;
-        net.toPlayer(actorPid, buildView(R.seatOf(g, actorPid)));
+        var fixed = buildView(R.seatOf(g, actorPid));
+        if (actorPid === pid) {
+          toast(errText(res.error), 'lose');
+          view = fixed;
+          render();
+        } else {
+          net.toPlayer(actorPid, { t: 'err', error: res.error });
+          net.toPlayer(actorPid, fixed);
+        }
       }
       return;
     }
@@ -709,10 +716,17 @@
 
   /* ---------- 动作按钮 ---------- */
 
+  /** 成员把动作发给房主；房主本地直接推进状态机（toHost 只认 member 角色，
+      房主的动作走网络回环会被静默丢弃——只能干等托管超时的元凶） */
+  function submitAction(action) {
+    if (isHost && room && room.game) applyAndPush(pid, action, false);
+    else net.toHost(action);
+  }
+
   els.bidBar.addEventListener('click', function (e) {
     var btn = e.target.closest ? e.target.closest('[data-bid]') : null;
     if (!btn || btn.disabled) return;
-    net.toHost({ t: 'bid', v: Number(btn.dataset.bid) });
+    submitAction({ t: 'bid', v: Number(btn.dataset.bid) });
     Casino.sfx.click();
   });
 
@@ -720,13 +734,13 @@
     if (!selected.length) { toast('先选要出的牌', 'lose'); return; }
     var combo = R.detect(selected);
     if (!combo) { toast('这不是合法牌型', 'lose'); return; }
-    net.toHost({ t: 'play', cards: selected.slice().sort(function (a, b) { return a - b; }) });
+    submitAction({ t: 'play', cards: selected.slice().sort(function (a, b) { return a - b; }) });
     selected = [];
     Casino.sfx.roll();
   });
 
   els.passBtn.addEventListener('click', function () {
-    net.toHost({ t: 'pass' });
+    submitAction({ t: 'pass' });
     selected = [];
     Casino.sfx.click();
   });
